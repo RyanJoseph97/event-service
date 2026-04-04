@@ -18,13 +18,16 @@
 
     <properties>
         <java.version>11</java.version>
+        <!-- Override with -Dgithub.packages.owner=OWNER or set GITHUB_PACKAGES_OWNER env var.
+             In GitHub Actions this is set automatically via the CI workflow. -->
+        <github.packages.owner>RyanJoseph97</github.packages.owner>
     </properties>
 
-    <!-- Pull jwt-common from GitHub Packages. Replace YOUR_GITHUB_USERNAME. -->
+    <!-- Pull jwt-common from GitHub Packages. -->
     <repositories>
         <repository>
             <id>github</id>
-            <url>https://maven.pkg.github.com/YOUR_GITHUB_USERNAME/jwt-common</url>
+            <url>https://maven.pkg.github.com/${github.packages.owner}/jwt-common</url>
         </repository>
     </repositories>
 
@@ -32,7 +35,7 @@
         <dependency>
             <groupId>com.eventmaster</groupId>
             <artifactId>jwt-common</artifactId>
-            <version>1.0.0</version>
+            <version>1.1.0</version>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -44,7 +47,20 @@
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.security</groupId>
+            <artifactId>spring-security-test</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>
