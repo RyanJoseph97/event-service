@@ -43,7 +43,7 @@ public class RsvpService {
             // Race condition: a concurrent request inserted the row between our find and save.
             // Retry as a guaranteed update on the now-existing row.
             EventRsvp existing = rsvpRepository.findByEventIdAndUsername(eventId, username)
-                    .orElseThrow(() -> new IllegalStateException("RSVP upsert failed unexpectedly", e));
+                    .orElseThrow(() -> new RuntimeException("RSVP upsert failed unexpectedly", e));
             existing.setStatus(status);
             return rsvpRepository.save(existing);
         }
