@@ -1,10 +1,14 @@
 package com.eventmaster.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import javax.persistence.*;
 import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "events")
 public class Event {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
@@ -12,64 +16,71 @@ public class Event {
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
-
-    @Column(name="start_time")
-    private LocalDateTime startTime;
-
-    @Column(name="end_time")
-    private LocalDateTime endTime;
 
     @Column(nullable = false)
     private String location;
 
-    @Column(name = "creator_id")
-    private long creatorId;
+    @Column(name = "start_time", nullable = false)
+    private LocalDateTime startTime;
 
-    // Constructors, getters, setters, etc.
-    public Event(){};
+    @Column(name = "end_time")
+    private LocalDateTime endTime;
 
-    public Event(Long id, String title, String description, String location, LocalDateTime startTime, long creatorId){
-        this.id = id;
+    @Column
+    private Integer capacity;
+
+    @Column(name = "creator_username", nullable = false)
+    private String creatorUsername;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private Visibility visibility = Visibility.PUBLIC;
+
+    public Event() {}
+
+    public Event(String title, String description, String location,
+                 LocalDateTime startTime, LocalDateTime endTime,
+                 Integer capacity, String creatorUsername, Visibility visibility) {
         this.title = title;
         this.description = description;
         this.location = location;
         this.startTime = startTime;
-        this.creatorId = creatorId;
-    }
-
-    public Event(Long id, String title, String description, String location, LocalDateTime startTime, LocalDateTime endTime, long creatorId){
-        this.id = id;
-        this.title = title;
-        this.description = description;
-        this.location = location;
-        this.startTime = startTime;
-        this.creatorId = creatorId;
         this.endTime = endTime;
+        this.capacity = capacity;
+        this.creatorUsername = creatorUsername;
+        this.createdAt = LocalDateTime.now();
+        this.visibility = visibility != null ? visibility : Visibility.PUBLIC;
     }
 
-    public Long getId(){
-        return id;
-    }
+    public Long getId() { return id; }
 
-    public String getTitle(){
-        return title;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
 
-    public String Description(){
-        return description;
-    }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
-    public LocalDateTime getStartTime(){
-        return startTime;
-    }
+    public String getLocation() { return location; }
+    public void setLocation(String location) { this.location = location; }
 
-    public String getLocation(){
-        return location;
-    }
+    public LocalDateTime getStartTime() { return startTime; }
+    public void setStartTime(LocalDateTime startTime) { this.startTime = startTime; }
 
-    public LocalDateTime getEndTime(){ return endTime; }
+    public LocalDateTime getEndTime() { return endTime; }
+    public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
-    public long getCreatorId(){ return creatorId; }
+    public Integer getCapacity() { return capacity; }
+    public void setCapacity(Integer capacity) { this.capacity = capacity; }
+
+    public String getCreatorUsername() { return creatorUsername; }
+
+    public LocalDateTime getCreatedAt() { return createdAt; }
+
+    public Visibility getVisibility() { return visibility; }
+    public void setVisibility(Visibility visibility) { this.visibility = visibility; }
 }
