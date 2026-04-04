@@ -1,7 +1,5 @@
 package com.eventmaster.model;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 import javax.validation.constraints.*;
 import java.time.LocalDateTime;
 
