@@ -8,6 +8,7 @@ import com.eventmaster.repository.EventRsvpRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,12 +30,23 @@ public class RsvpService {
     @Transactional
     public EventRsvp upsertRsvp(Long eventId, String username, RsvpStatus status) {
         Event event = eventService.findById(eventId);
-        EventRsvp rsvp = rsvpRepository.findByEventIdAndUsername(eventId, username)
-                .orElse(new EventRsvp(event, username, status));
-        rsvp.setStatus(status);
-        EventRsvp saved = rsvpRepository.save(rsvp);
-        logger.info("User '{}' RSVPed to event {} with status {}", username, eventId, status);
-        return saved;
+        try {
+            // Use map() so setStatus() (which stamps updatedAt) only runs on existing RSVPs,
+            // not on a freshly constructed one where updatedAt should remain null.
+            EventRsvp rsvp = rsvpRepository.findByEventIdAndUsername(eventId, username)
+                    .map(existing -> { existing.setStatus(status); return existing; })
+                    .orElse(new EventRsvp(event, username, status));
+            EventRsvp saved = rsvpRepository.save(rsvp);
+            logger.info("User '{}' RSVPed to event {} with status {}", username, eventId, status);
+            return saved;
+        } catch (DataIntegrityViolationException e) {
+            // Race condition: a concurrent request inserted the row between our find and save.
+            // Retry as a guaranteed update on the now-existing row.
+            EventRsvp existing = rsvpRepository.findByEventIdAndUsername(eventId, username)
+                    .orElseThrow(() -> new IllegalStateException("RSVP upsert failed unexpectedly", e));
+            existing.setStatus(status);
+            return rsvpRepository.save(existing);
+        }
     }
 
     @Transactional

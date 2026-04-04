@@ -36,7 +36,7 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JWT_SECRET: ${{ secrets.JWT_SECRET || 'ci-test-secret-not-used-by-unit-tests' }}
-        run: mvn --batch-mode --no-transfer-progress verify
+        run: mvn --batch-mode --no-transfer-progress verify -Dgithub.packages.owner=${{ github.repository_owner }}
 
       - name: Upload test results
         if: always()
@@ -75,7 +75,7 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: mvn --batch-mode --no-transfer-progress compile -DskipTests
+        run: mvn --batch-mode --no-transfer-progress compile -DskipTests -Dgithub.packages.owner=${{ github.repository_owner }}
 
       - name: Run CodeQL analysis
         uses: github/codeql-action/analyze@v3

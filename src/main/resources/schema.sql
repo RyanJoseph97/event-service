@@ -23,7 +23,7 @@ CREATE TABLE event_likes (
     event_id   BIGINT       NOT NULL,
     username   VARCHAR(255) NOT NULL,
     liked_at   TIMESTAMP    NOT NULL,
-    CONSTRAINT fk_like_event FOREIGN KEY (event_id) REFERENCES events(id),
+    CONSTRAINT fk_like_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
     CONSTRAINT uq_like UNIQUE (event_id, username)
 );
 
@@ -34,7 +34,7 @@ CREATE TABLE event_rsvps (
     status     VARCHAR(20)  NOT NULL,
     created_at TIMESTAMP    NOT NULL,
     updated_at TIMESTAMP,
-    CONSTRAINT fk_rsvp_event FOREIGN KEY (event_id) REFERENCES events(id),
+    CONSTRAINT fk_rsvp_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
     CONSTRAINT uq_rsvp UNIQUE (event_id, username)
 );
 

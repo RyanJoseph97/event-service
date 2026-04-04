@@ -21,8 +21,10 @@ import org.springframework.test.web.servlet.request.RequestPostProcessor;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -56,9 +58,9 @@ public class EventControllerTest {
 
     /** Sets request principal so Spring MVC injects Authentication into controller params. */
     private RequestPostProcessor auth(String username, String... authorities) {
-        List<SimpleGrantedAuthority> grantedAuthorities = authorities.length > 0
-                ? List.of(new SimpleGrantedAuthority(authorities[0]))
-                : Collections.emptyList();
+        List<SimpleGrantedAuthority> grantedAuthorities = Arrays.stream(authorities)
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
         UsernamePasswordAuthenticationToken token =
                 new UsernamePasswordAuthenticationToken(username, null, grantedAuthorities);
         return (MockHttpServletRequest request) -> {

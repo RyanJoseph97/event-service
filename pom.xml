@@ -18,6 +18,8 @@
 
     <properties>
         <java.version>11</java.version>
+        <!-- Override with -Dgithub.packages.owner=OWNER or set GITHUB_PACKAGES_OWNER env var.
+             In GitHub Actions this is set automatically via the CI workflow. -->
         <github.packages.owner>RyanJoseph97</github.packages.owner>
     </properties>
 

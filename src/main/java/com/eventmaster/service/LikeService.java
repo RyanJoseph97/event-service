@@ -7,6 +7,7 @@ import com.eventmaster.repository.EventLikeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,7 +28,12 @@ public class LikeService {
         if (likeRepository.existsByEventIdAndUsername(eventId, username)) {
             throw new IllegalStateException("You have already liked this event");
         }
-        likeRepository.save(new EventLike(event, username));
+        try {
+            likeRepository.save(new EventLike(event, username));
+        } catch (DataIntegrityViolationException e) {
+            // Race condition: concurrent request inserted a like between our existence check and save.
+            throw new IllegalStateException("You have already liked this event");
+        }
         logger.info("User '{}' liked event {}", username, eventId);
     }
 
