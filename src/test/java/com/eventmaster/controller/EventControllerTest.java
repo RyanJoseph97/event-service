@@ -29,6 +29,8 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+// Note: getAllEvents now takes (location, creatorUsername, startAfter, startBefore, visibility)
+
 public class EventControllerTest {
 
     @Mock
@@ -87,10 +89,30 @@ public class EventControllerTest {
     // --- GET ---
 
     @Test
-    public void getAllEvents_returns200WithList() throws Exception {
-        when(eventService.getAllEvents()).thenReturn(List.of(sampleEvent));
+    public void getAllEvents_noParams_returns200WithList() throws Exception {
+        when(eventService.getAllEvents(null, null, null, null, null)).thenReturn(List.of(sampleEvent));
 
         mockMvc.perform(get("/events"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Music Night"));
+    }
+
+    @Test
+    public void getAllEvents_withLocationFilter_passesParamToService() throws Exception {
+        when(eventService.getAllEvents(eq("Austin"), isNull(), isNull(), isNull(), isNull()))
+                .thenReturn(List.of(sampleEvent));
+
+        mockMvc.perform(get("/events").param("location", "Austin"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].title").value("Music Night"));
+    }
+
+    @Test
+    public void getAllEvents_withVisibilityFilter_passesParamToService() throws Exception {
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC)))
+                .thenReturn(List.of(sampleEvent));
+
+        mockMvc.perform(get("/events").param("visibility", "PUBLIC"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].title").value("Music Night"));
     }
@@ -193,6 +215,28 @@ public class EventControllerTest {
                         .content(body))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errors.startTime").exists());
+    }
+
+    @Test
+    public void createEvent_withImageUrl_returnsImageUrlInResponse() throws Exception {
+        Event eventWithImage = new Event("Music Night", "Live bands", "6th Street",
+                LocalDateTime.of(2025, 6, 1, 20, 0), null, 100, "alice", Visibility.PUBLIC);
+        ReflectionTestUtils.setField(eventWithImage, "id", 2L);
+        eventWithImage.setImageUrl("https://example.com/image.jpg");
+
+        when(eventService.createEvent(any(CreateEventRequest.class), eq("alice")))
+                .thenReturn(eventWithImage);
+
+        String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\","
+                + "\"imageUrl\":\"https://example.com/image.jpg\"}";
+
+        mockMvc.perform(post("/events")
+                        .with(auth("alice", "VERIFIED"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imageUrl").value("https://example.com/image.jpg"));
     }
 
     // --- PATCH /{id} ---

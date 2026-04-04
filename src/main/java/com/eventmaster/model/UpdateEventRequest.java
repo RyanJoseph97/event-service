@@ -23,6 +23,9 @@ public class UpdateEventRequest {
 
     private Visibility visibility;
 
+    @Size(max = 2048, message = "Image URL must not exceed 2048 characters")
+    private String imageUrl;
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
@@ -43,4 +46,7 @@ public class UpdateEventRequest {
 
     public Visibility getVisibility() { return visibility; }
     public void setVisibility(Visibility visibility) { this.visibility = visibility; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

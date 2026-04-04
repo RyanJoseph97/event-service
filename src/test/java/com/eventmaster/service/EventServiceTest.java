@@ -10,6 +10,7 @@ import com.eventmaster.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
@@ -76,6 +77,17 @@ public class EventServiceTest {
     }
 
     @Test
+    public void createEvent_withImageUrl_setsImageUrl() {
+        CreateEventRequest request = buildCreateRequest("Image Event", Visibility.PUBLIC);
+        request.setImageUrl("https://example.com/img.png");
+        when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        Event result = eventService.createEvent(request, "alice");
+
+        assertEquals("https://example.com/img.png", result.getImageUrl());
+    }
+
+    @Test
     public void createEvent_setsCreatedAt() {
         CreateEventRequest request = buildCreateRequest("Timed Event", Visibility.PUBLIC);
         when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -107,12 +119,26 @@ public class EventServiceTest {
     // --- getAllEvents ---
 
     @Test
-    public void getAllEvents_returnsList() {
-        when(eventRepository.findAll()).thenReturn(List.of(sampleEvent));
+    @SuppressWarnings("unchecked")
+    public void getAllEvents_noFilters_returnsList() {
+        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(sampleEvent));
 
-        List<Event> result = eventService.getAllEvents();
+        List<Event> result = eventService.getAllEvents(null, null, null, null, null);
 
         assertEquals(1, result.size());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void getAllEvents_withFilters_passesSpecToRepository() {
+        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(sampleEvent));
+
+        List<Event> result = eventService.getAllEvents("Austin", "alice",
+                LocalDateTime.of(2025, 1, 1, 0, 0), LocalDateTime.of(2025, 12, 31, 23, 59),
+                Visibility.PUBLIC);
+
+        assertEquals(1, result.size());
+        verify(eventRepository).findAll(any(Specification.class));
     }
 
     // --- findByCreatorUsername ---

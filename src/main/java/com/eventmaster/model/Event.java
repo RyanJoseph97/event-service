@@ -41,6 +41,9 @@ public class Event {
     @Column(nullable = false)
     private Visibility visibility = Visibility.PUBLIC;
 
+    @Column(name = "image_url", length = 2048)
+    private String imageUrl;
+
     public Event() {}
 
     public Event(String title, String description, String location,
@@ -83,4 +86,7 @@ public class Event {
 
     public Visibility getVisibility() { return visibility; }
     public void setVisibility(Visibility visibility) { this.visibility = visibility; }
+
+    public String getImageUrl() { return imageUrl; }
+    public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
 }

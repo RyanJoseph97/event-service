@@ -9,12 +9,14 @@ import com.eventmaster.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
 
@@ -38,9 +40,15 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Event>> getAllEvents() {
-        logger.debug("GET /events");
-        return ResponseEntity.ok(eventService.getAllEvents());
+    public ResponseEntity<List<Event>> getAllEvents(
+            @RequestParam(required = false) String location,
+            @RequestParam(required = false) String creatorUsername,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAfter,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startBefore,
+            @RequestParam(required = false) Visibility visibility) {
+        logger.debug("GET /events location={} creatorUsername={} startAfter={} startBefore={} visibility={}",
+                location, creatorUsername, startAfter, startBefore, visibility);
+        return ResponseEntity.ok(eventService.getAllEvents(location, creatorUsername, startAfter, startBefore, visibility));
     }
 
     @GetMapping("/by-creator/{username}")

@@ -7,9 +7,11 @@ import com.eventmaster.model.Event;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.repository.EventRepository;
+import com.eventmaster.repository.EventSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -34,6 +36,7 @@ public class EventService {
                 creatorUsername,
                 request.getVisibility()
         );
+        event.setImageUrl(request.getImageUrl());
         Event saved = eventRepository.save(event);
         logger.info("Event created with id: {} by user: {}", saved.getId(), creatorUsername);
         return saved;
@@ -44,8 +47,16 @@ public class EventService {
                 .orElseThrow(() -> new EventNotFoundException(id));
     }
 
-    public List<Event> getAllEvents() {
-        return eventRepository.findAll();
+    public List<Event> getAllEvents(String location, String creatorUsername,
+                                    LocalDateTime startAfter, LocalDateTime startBefore,
+                                    Visibility visibility) {
+        Specification<Event> spec = Specification.where(null);
+        if (location != null)         spec = spec.and(EventSpecification.locationContains(location));
+        if (creatorUsername != null)  spec = spec.and(EventSpecification.creatorUsernameEquals(creatorUsername));
+        if (startAfter != null)       spec = spec.and(EventSpecification.startAfter(startAfter));
+        if (startBefore != null)      spec = spec.and(EventSpecification.startBefore(startBefore));
+        if (visibility != null)       spec = spec.and(EventSpecification.visibilityEquals(visibility));
+        return eventRepository.findAll(spec);
     }
 
     public List<Event> findByCreatorUsername(String creatorUsername) {
@@ -64,6 +75,7 @@ public class EventService {
         if (request.getEndTime() != null) event.setEndTime(request.getEndTime());
         if (request.getCapacity() != null) event.setCapacity(request.getCapacity());
         if (request.getVisibility() != null) event.setVisibility(request.getVisibility());
+        if (request.getImageUrl() != null) event.setImageUrl(request.getImageUrl());
         Event updated = eventRepository.save(event);
         logger.info("Event {} updated by user: {}", id, requesterUsername);
         return updated;

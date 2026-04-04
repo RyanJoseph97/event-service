@@ -12,7 +12,8 @@ CREATE TABLE events (
     capacity         INT,
     creator_username VARCHAR(255)  NOT NULL,
     created_at       TIMESTAMP     NOT NULL,
-    visibility       VARCHAR(20)   NOT NULL DEFAULT 'PUBLIC'
+    visibility       VARCHAR(20)   NOT NULL DEFAULT 'PUBLIC',
+    image_url        VARCHAR(2048)
 );
 
 CREATE INDEX idx_events_creator ON events(creator_username);
