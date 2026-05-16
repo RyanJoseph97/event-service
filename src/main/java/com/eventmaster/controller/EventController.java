@@ -9,6 +9,9 @@ import com.eventmaster.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -40,15 +43,16 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Event>> getAllEvents(
+    public ResponseEntity<Page<Event>> getAllEvents(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String creatorUsername,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAfter,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startBefore,
-            @RequestParam(required = false) Visibility visibility) {
+            @RequestParam(required = false) Visibility visibility,
+            @PageableDefault(size = 20) Pageable pageable) {
         logger.debug("GET /events location={} creatorUsername={} startAfter={} startBefore={} visibility={}",
                 location, creatorUsername, startAfter, startBefore, visibility);
-        return ResponseEntity.ok(eventService.getAllEvents(location, creatorUsername, startAfter, startBefore, visibility));
+        return ResponseEntity.ok(eventService.getAllEvents(location, creatorUsername, null, startAfter, startBefore, visibility, pageable));
     }
 
     @GetMapping("/by-creator/{username}")

@@ -11,11 +11,14 @@ import com.eventmaster.repository.EventSpecification;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Collections;
 
 @Service
 public class EventService {
@@ -47,16 +50,18 @@ public class EventService {
                 .orElseThrow(() -> new EventNotFoundException(id));
     }
 
-    public List<Event> getAllEvents(String location, String creatorUsername,
+    public Page<Event> getAllEvents(String location, String creatorUsername,
+                                    List<String> creatorUsernames,
                                     LocalDateTime startAfter, LocalDateTime startBefore,
-                                    Visibility visibility) {
+                                    Visibility visibility, Pageable pageable) {
         Specification<Event> spec = Specification.where(null);
-        if (location != null)         spec = spec.and(EventSpecification.locationContains(location));
-        if (creatorUsername != null)  spec = spec.and(EventSpecification.creatorUsernameEquals(creatorUsername));
-        if (startAfter != null)       spec = spec.and(EventSpecification.startAfter(startAfter));
-        if (startBefore != null)      spec = spec.and(EventSpecification.startBefore(startBefore));
-        if (visibility != null)       spec = spec.and(EventSpecification.visibilityEquals(visibility));
-        return eventRepository.findAll(spec);
+        if (location != null)                                    spec = spec.and(EventSpecification.locationContains(location));
+        if (creatorUsernames != null && !creatorUsernames.isEmpty()) spec = spec.and(EventSpecification.creatorUsernameIn(creatorUsernames));
+        else if (creatorUsername != null)                        spec = spec.and(EventSpecification.creatorUsernameEquals(creatorUsername));
+        if (startAfter != null)                                  spec = spec.and(EventSpecification.startAfter(startAfter));
+        if (startBefore != null)                                 spec = spec.and(EventSpecification.startBefore(startBefore));
+        if (visibility != null)                                  spec = spec.and(EventSpecification.visibilityEquals(visibility));
+        return eventRepository.findAll(spec, pageable);
     }
 
     public List<Event> findByCreatorUsername(String creatorUsername) {

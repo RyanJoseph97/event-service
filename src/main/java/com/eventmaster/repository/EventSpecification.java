@@ -5,6 +5,7 @@ import com.eventmaster.model.Visibility;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class EventSpecification {
 
@@ -31,5 +32,10 @@ public class EventSpecification {
     public static Specification<Event> visibilityEquals(Visibility visibility) {
         return (root, query, cb) ->
                 cb.equal(root.get("visibility"), visibility);
+    }
+
+    public static Specification<Event> creatorUsernameIn(List<String> usernames) {
+        return (root, query, cb) ->
+                root.get("creatorUsername").in(usernames);
     }
 }

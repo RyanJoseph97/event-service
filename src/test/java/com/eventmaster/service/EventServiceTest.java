@@ -10,6 +10,9 @@ import com.eventmaster.repository.EventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -121,24 +124,24 @@ public class EventServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     public void getAllEvents_noFilters_returnsList() {
-        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(sampleEvent));
+        when(eventRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
-        List<Event> result = eventService.getAllEvents(null, null, null, null, null);
+        Page<Event> result = eventService.getAllEvents(null, null, null, null, null, null, Pageable.unpaged());
 
-        assertEquals(1, result.size());
+        assertEquals(1, result.getTotalElements());
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void getAllEvents_withFilters_passesSpecToRepository() {
-        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(sampleEvent));
+        when(eventRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
-        List<Event> result = eventService.getAllEvents("Austin", "alice",
+        Page<Event> result = eventService.getAllEvents("Austin", "alice", null,
                 LocalDateTime.of(2025, 1, 1, 0, 0), LocalDateTime.of(2025, 12, 31, 23, 59),
-                Visibility.PUBLIC);
+                Visibility.PUBLIC, Pageable.unpaged());
 
-        assertEquals(1, result.size());
-        verify(eventRepository).findAll(any(Specification.class));
+        assertEquals(1, result.getTotalElements());
+        verify(eventRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     // --- findByCreatorUsername ---

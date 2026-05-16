@@ -11,6 +11,10 @@ import com.eventmaster.service.EventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -48,6 +52,7 @@ public class EventControllerTest {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(eventController)
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
 
         sampleEvent = new Event("Music Night", "Live bands", "6th Street",
@@ -91,31 +96,32 @@ public class EventControllerTest {
 
     @Test
     public void getAllEvents_noParams_returns200WithList() throws Exception {
-        when(eventService.getAllEvents(null, null, null, null, null)).thenReturn(List.of(sampleEvent));
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Music Night"));
+                .andExpect(jsonPath("$.content[0].title").value("Music Night"));
     }
 
     @Test
     public void getAllEvents_withLocationFilter_passesParamToService() throws Exception {
-        when(eventService.getAllEvents(eq("Austin"), isNull(), isNull(), isNull(), isNull()))
-                .thenReturn(List.of(sampleEvent));
+        when(eventService.getAllEvents(eq("Austin"), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events").param("location", "Austin"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Music Night"));
+                .andExpect(jsonPath("$.content[0].title").value("Music Night"));
     }
 
     @Test
     public void getAllEvents_withVisibilityFilter_passesParamToService() throws Exception {
-        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC)))
-                .thenReturn(List.of(sampleEvent));
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC), any(Pageable.class)))
+                .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events").param("visibility", "PUBLIC"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Music Night"));
+                .andExpect(jsonPath("$.content[0].title").value("Music Night"));
     }
 
     // --- GET /by-creator/{username} ---
