@@ -10,4 +10,6 @@ public interface EventLikeRepository extends JpaRepository<EventLike, Long> {
     long countByEventId(Long eventId);
 
     void deleteByEventIdAndUsername(Long eventId, String username);
+
+    void deleteByEventId(Long eventId);
 }

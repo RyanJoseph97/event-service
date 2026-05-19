@@ -12,4 +12,6 @@ public interface SavedEventRepository extends JpaRepository<SavedEvent, Long> {
     List<SavedEvent> findByUsername(String username);
 
     void deleteByUsernameAndEventId(String username, Long eventId);
+
+    void deleteByEventId(Long eventId);
 }

@@ -6,8 +6,13 @@ import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
+import com.eventmaster.repository.CommentLikeRepository;
+import com.eventmaster.repository.CommentRepository;
+import com.eventmaster.repository.EventLikeRepository;
 import com.eventmaster.repository.EventRepository;
+import com.eventmaster.repository.EventRsvpRepository;
 import com.eventmaster.repository.EventSpecification;
+import com.eventmaster.repository.SavedEventRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -27,6 +33,21 @@ public class EventService {
 
     @Autowired
     private EventRepository eventRepository;
+
+    @Autowired
+    private CommentLikeRepository commentLikeRepository;
+
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private EventLikeRepository eventLikeRepository;
+
+    @Autowired
+    private EventRsvpRepository eventRsvpRepository;
+
+    @Autowired
+    private SavedEventRepository savedEventRepository;
 
     public Event createEvent(CreateEventRequest request, String creatorUsername) {
         Event event = new Event(
@@ -86,11 +107,19 @@ public class EventService {
         return updated;
     }
 
+    @Transactional
     public void deleteEvent(Long id, String requesterUsername) {
         Event event = findById(id);
         if (!event.getCreatorUsername().equals(requesterUsername)) {
             throw new ForbiddenException("You do not have permission to delete this event");
         }
+        // Delete child records in dependency order to avoid FK constraint violations.
+        // CommentLikes reference Comments, so they must go first.
+        commentLikeRepository.deleteByComment_EventId(id);
+        commentRepository.deleteByEventId(id);
+        eventLikeRepository.deleteByEventId(id);
+        eventRsvpRepository.deleteByEventId(id);
+        savedEventRepository.deleteByEventId(id);
         eventRepository.delete(event);
         logger.info("Event {} deleted by user: {}", id, requesterUsername);
     }

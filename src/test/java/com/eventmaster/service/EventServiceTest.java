@@ -6,7 +6,12 @@ import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
+import com.eventmaster.repository.CommentLikeRepository;
+import com.eventmaster.repository.CommentRepository;
+import com.eventmaster.repository.EventLikeRepository;
 import com.eventmaster.repository.EventRepository;
+import com.eventmaster.repository.EventRsvpRepository;
+import com.eventmaster.repository.SavedEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
@@ -28,6 +33,21 @@ public class EventServiceTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private CommentLikeRepository commentLikeRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
+
+    @Mock
+    private EventLikeRepository eventLikeRepository;
+
+    @Mock
+    private EventRsvpRepository eventRsvpRepository;
+
+    @Mock
+    private SavedEventRepository savedEventRepository;
 
     @InjectMocks
     private EventService eventService;

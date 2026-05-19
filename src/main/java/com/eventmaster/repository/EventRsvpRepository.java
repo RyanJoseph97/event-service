@@ -15,4 +15,6 @@ public interface EventRsvpRepository extends JpaRepository<EventRsvp, Long> {
     long countByEventIdAndStatus(Long eventId, RsvpStatus status);
 
     void deleteByEventIdAndUsername(Long eventId, String username);
+
+    void deleteByEventId(Long eventId);
 }
