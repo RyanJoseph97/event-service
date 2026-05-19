@@ -66,4 +66,9 @@ public class RsvpService {
         long notGoing   = rsvpRepository.countByEventIdAndStatus(eventId, RsvpStatus.NOT_GOING);
         return new RsvpSummaryResponse(going, interested, notGoing);
     }
+
+    public java.util.Optional<EventRsvp> getMyRsvp(Long eventId, String username) {
+        eventService.findById(eventId); // verify event exists
+        return rsvpRepository.findByEventIdAndUsername(eventId, username);
+    }
 }

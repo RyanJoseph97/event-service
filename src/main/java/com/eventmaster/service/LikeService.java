@@ -52,4 +52,8 @@ public class LikeService {
         long count = likeRepository.countByEventId(eventId);
         return new LikeCountResponse(count);
     }
+
+    public boolean isLikedByUser(Long eventId, String username) {
+        return likeRepository.existsByEventIdAndUsername(eventId, username);
+    }
 }

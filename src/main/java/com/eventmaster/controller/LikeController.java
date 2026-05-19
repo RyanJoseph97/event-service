@@ -30,4 +30,11 @@ public class LikeController {
     public ResponseEntity<LikeCountResponse> getLikeCount(@PathVariable Long id) {
         return ResponseEntity.ok(likeService.getLikeCount(id));
     }
+
+    @GetMapping("/{id}/likes/me")
+    public ResponseEntity<Void> isLikedByMe(@PathVariable Long id, Authentication authentication) {
+        return likeService.isLikedByUser(id, authentication.getName())
+                ? ResponseEntity.ok().build()
+                : ResponseEntity.notFound().build();
+    }
 }

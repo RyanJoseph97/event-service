@@ -35,4 +35,11 @@ public class RsvpController {
     public ResponseEntity<RsvpSummaryResponse> getRsvpSummary(@PathVariable Long id) {
         return ResponseEntity.ok(rsvpService.getSummary(id));
     }
+
+    @GetMapping("/{id}/rsvps/me")
+    public ResponseEntity<EventRsvp> getMyRsvp(@PathVariable Long id, Authentication authentication) {
+        return rsvpService.getMyRsvp(id, authentication.getName())
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
 }
