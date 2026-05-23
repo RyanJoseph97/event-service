@@ -8,6 +8,7 @@ import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.repository.CommentLikeRepository;
 import com.eventmaster.repository.CommentRepository;
+import com.eventmaster.repository.EventInviteRepository;
 import com.eventmaster.repository.EventLikeRepository;
 import com.eventmaster.repository.EventRepository;
 import com.eventmaster.repository.EventRsvpRepository;
@@ -48,6 +49,9 @@ public class EventServiceTest {
 
     @Mock
     private SavedEventRepository savedEventRepository;
+
+    @Mock
+    private EventInviteRepository eventInviteRepository;
 
     @InjectMocks
     private EventService eventService;
@@ -146,7 +150,7 @@ public class EventServiceTest {
     public void getAllEvents_noFilters_returnsList() {
         when(eventRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
-        Page<Event> result = eventService.getAllEvents(null, null, null, null, null, null, Pageable.unpaged());
+        Page<Event> result = eventService.getAllEvents(null, null, null, null, null, null, Pageable.unpaged(), null);
 
         assertEquals(1, result.getTotalElements());
     }
@@ -158,7 +162,7 @@ public class EventServiceTest {
 
         Page<Event> result = eventService.getAllEvents("Austin", "alice", null,
                 LocalDateTime.of(2025, 1, 1, 0, 0), LocalDateTime.of(2025, 12, 31, 23, 59),
-                Visibility.PUBLIC, Pageable.unpaged());
+                Visibility.PUBLIC, Pageable.unpaged(), null);
 
         assertEquals(1, result.getTotalElements());
         verify(eventRepository).findAll(any(Specification.class), any(Pageable.class));

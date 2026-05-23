@@ -4,6 +4,7 @@ import com.eventmaster.model.EventRsvp;
 import com.eventmaster.model.RsvpStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface EventRsvpRepository extends JpaRepository<EventRsvp, Long> {
@@ -17,4 +18,6 @@ public interface EventRsvpRepository extends JpaRepository<EventRsvp, Long> {
     void deleteByEventIdAndUsername(Long eventId, String username);
 
     void deleteByEventId(Long eventId);
+
+    List<EventRsvp> findByUsernameAndStatusIn(String username, List<RsvpStatus> statuses);
 }

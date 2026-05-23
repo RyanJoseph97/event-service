@@ -4,10 +4,13 @@ import com.eventmaster.exception.EventNotFoundException;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventSummaryResponse;
+import com.eventmaster.model.RsvpStatus;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.repository.CommentLikeRepository;
 import com.eventmaster.repository.CommentRepository;
+import com.eventmaster.repository.EventInviteRepository;
 import com.eventmaster.repository.EventLikeRepository;
 import com.eventmaster.repository.EventRepository;
 import com.eventmaster.repository.EventRsvpRepository;
@@ -49,6 +52,9 @@ public class EventService {
     @Autowired
     private SavedEventRepository savedEventRepository;
 
+    @Autowired
+    private EventInviteRepository eventInviteRepository;
+
     public Event createEvent(CreateEventRequest request, String creatorUsername) {
         Event event = new Event(
                 request.getTitle(),
@@ -71,10 +77,22 @@ public class EventService {
                 .orElseThrow(() -> new EventNotFoundException(id));
     }
 
+    public Event findById(Long id, String viewerUsername) {
+        Event event = findById(id);
+        if (event.getVisibility() == Visibility.INVITE_ONLY) {
+            boolean canSee = viewerUsername != null && (
+                    event.getCreatorUsername().equals(viewerUsername) ||
+                    eventInviteRepository.existsByEventIdAndInviteeUsername(id, viewerUsername));
+            if (!canSee) throw new ForbiddenException("This event is invite-only");
+        }
+        return event;
+    }
+
     public Page<Event> getAllEvents(String location, String creatorUsername,
                                     List<String> creatorUsernames,
                                     LocalDateTime startAfter, LocalDateTime startBefore,
-                                    Visibility visibility, Pageable pageable) {
+                                    Visibility visibility, Pageable pageable,
+                                    String viewerUsername) {
         Specification<Event> spec = Specification.where(null);
         if (location != null)                                    spec = spec.and(EventSpecification.locationContains(location));
         if (creatorUsernames != null && !creatorUsernames.isEmpty()) spec = spec.and(EventSpecification.creatorUsernameIn(creatorUsernames));
@@ -82,6 +100,12 @@ public class EventService {
         if (startAfter != null)                                  spec = spec.and(EventSpecification.startAfter(startAfter));
         if (startBefore != null)                                 spec = spec.and(EventSpecification.startBefore(startBefore));
         if (visibility != null)                                  spec = spec.and(EventSpecification.visibilityEquals(visibility));
+        if (viewerUsername == null) {
+            spec = spec.and(EventSpecification.visibilityEquals(Visibility.PUBLIC));
+        } else {
+            List<Long> invitedIds = eventInviteRepository.findEventIdsByInviteeUsername(viewerUsername);
+            spec = spec.and(EventSpecification.visibleTo(viewerUsername, invitedIds));
+        }
         return eventRepository.findAll(spec, pageable);
     }
 
@@ -107,6 +131,12 @@ public class EventService {
         return updated;
     }
 
+    public EventSummaryResponse toSummary(Event event) {
+        long likeCount = eventLikeRepository.countByEventId(event.getId());
+        long goingCount = eventRsvpRepository.countByEventIdAndStatus(event.getId(), RsvpStatus.GOING);
+        return new EventSummaryResponse(event, likeCount, goingCount);
+    }
+
     @Transactional
     public void deleteEvent(Long id, String requesterUsername) {
         Event event = findById(id);
@@ -120,6 +150,7 @@ public class EventService {
         eventLikeRepository.deleteByEventId(id);
         eventRsvpRepository.deleteByEventId(id);
         savedEventRepository.deleteByEventId(id);
+        eventInviteRepository.deleteByEventId(id);
         eventRepository.delete(event);
         logger.info("Event {} deleted by user: {}", id, requesterUsername);
     }

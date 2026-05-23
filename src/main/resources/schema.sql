@@ -1,6 +1,7 @@
 -- Drop in reverse FK dependency order
 DROP TABLE IF EXISTS comment_likes;
 DROP TABLE IF EXISTS saved_events;
+DROP TABLE IF EXISTS event_invites;
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS event_rsvps;
 DROP TABLE IF EXISTS event_likes;
@@ -59,6 +60,15 @@ CREATE TABLE comment_likes (
     liked_at   TIMESTAMP    NOT NULL,
     CONSTRAINT fk_comment_like FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
     CONSTRAINT uq_comment_like UNIQUE (comment_id, username)
+);
+
+CREATE TABLE event_invites (
+    id               BIGINT AUTO_INCREMENT PRIMARY KEY,
+    event_id         BIGINT       NOT NULL,
+    invitee_username VARCHAR(255) NOT NULL,
+    invited_at       TIMESTAMP    NOT NULL,
+    CONSTRAINT fk_invite_event FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    CONSTRAINT uq_invite       UNIQUE (event_id, invitee_username)
 );
 
 CREATE TABLE saved_events (

@@ -3,6 +3,7 @@ package com.eventmaster.controller;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.service.EventService;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
@@ -37,22 +39,30 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
+    public ResponseEntity<Event> getEventById(@PathVariable Long id, Authentication authentication) {
         logger.debug("GET /events/{}", id);
-        return ResponseEntity.ok(eventService.findById(id));
+        return ResponseEntity.ok(eventService.findById(id, viewerUsername(authentication)));
     }
 
     @GetMapping
-    public ResponseEntity<Page<Event>> getAllEvents(
+    public ResponseEntity<Page<EventSummaryResponse>> getAllEvents(
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String creatorUsername,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAfter,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startBefore,
             @RequestParam(required = false) Visibility visibility,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @PageableDefault(size = 20) Pageable pageable,
+            Authentication authentication) {
         logger.debug("GET /events location={} creatorUsername={} startAfter={} startBefore={} visibility={}",
                 location, creatorUsername, startAfter, startBefore, visibility);
-        return ResponseEntity.ok(eventService.getAllEvents(location, creatorUsername, null, startAfter, startBefore, visibility, pageable));
+        return ResponseEntity.ok(eventService.getAllEvents(location, creatorUsername, null,
+                startAfter, startBefore, visibility, pageable, viewerUsername(authentication))
+                .map(eventService::toSummary));
+    }
+
+    private String viewerUsername(Authentication authentication) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) return null;
+        return authentication.getName();
     }
 
     @GetMapping("/by-creator/{username}")

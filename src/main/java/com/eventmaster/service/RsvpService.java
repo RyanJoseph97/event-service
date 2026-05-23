@@ -1,5 +1,6 @@
 package com.eventmaster.service;
 
+import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventRsvp;
 import com.eventmaster.model.RsvpStatus;
@@ -11,6 +12,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RsvpService {
@@ -70,5 +75,17 @@ public class RsvpService {
     public java.util.Optional<EventRsvp> getMyRsvp(Long eventId, String username) {
         eventService.findById(eventId); // verify event exists
         return rsvpRepository.findByEventIdAndUsername(eventId, username);
+    }
+
+    public List<Event> getRsvpedEvents(String requestedUsername, String authenticatedUsername) {
+        if (!requestedUsername.equals(authenticatedUsername)) {
+            throw new ForbiddenException("You can only view your own RSVPed events");
+        }
+        return rsvpRepository.findByUsernameAndStatusIn(
+                requestedUsername, List.of(RsvpStatus.GOING, RsvpStatus.INTERESTED)
+        ).stream()
+                .map(EventRsvp::getEvent)
+                .sorted(Comparator.comparing(Event::getStartTime))
+                .collect(Collectors.toList());
     }
 }

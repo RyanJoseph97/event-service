@@ -5,6 +5,7 @@ import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.exception.GlobalExceptionHandler;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.service.EventService;
@@ -58,6 +59,9 @@ public class EventControllerTest {
         sampleEvent = new Event("Music Night", "Live bands", "6th Street",
                 LocalDateTime.of(2025, 6, 1, 20, 0), null, 100, "alice", Visibility.PUBLIC);
         ReflectionTestUtils.setField(sampleEvent, "id", 1L);
+
+        when(eventService.toSummary(any(Event.class)))
+                .thenAnswer(inv -> new EventSummaryResponse(inv.getArgument(0), 0L, 0L));
     }
 
     /** Sets request principal so Spring MVC injects Authentication into controller params. */
@@ -77,7 +81,7 @@ public class EventControllerTest {
 
     @Test
     public void getEventById_found_returns200() throws Exception {
-        when(eventService.findById(1L)).thenReturn(sampleEvent);
+        when(eventService.findById(eq(1L), isNull())).thenReturn(sampleEvent);
 
         mockMvc.perform(get("/events/1"))
                 .andExpect(status().isOk())
@@ -86,7 +90,7 @@ public class EventControllerTest {
 
     @Test
     public void getEventById_notFound_returns404() throws Exception {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(eq(99L), isNull())).thenThrow(new EventNotFoundException(99L));
 
         mockMvc.perform(get("/events/99"))
                 .andExpect(status().isNotFound());
@@ -96,7 +100,7 @@ public class EventControllerTest {
 
     @Test
     public void getAllEvents_noParams_returns200WithList() throws Exception {
-        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class), isNull()))
                 .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events"))
@@ -106,7 +110,7 @@ public class EventControllerTest {
 
     @Test
     public void getAllEvents_withLocationFilter_passesParamToService() throws Exception {
-        when(eventService.getAllEvents(eq("Austin"), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class)))
+        when(eventService.getAllEvents(eq("Austin"), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class), isNull()))
                 .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events").param("location", "Austin"))
@@ -116,7 +120,7 @@ public class EventControllerTest {
 
     @Test
     public void getAllEvents_withVisibilityFilter_passesParamToService() throws Exception {
-        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC), any(Pageable.class)))
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC), any(Pageable.class), isNull()))
                 .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events").param("visibility", "PUBLIC"))
