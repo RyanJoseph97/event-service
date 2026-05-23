@@ -3,6 +3,7 @@ package com.eventmaster.service;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventRsvp;
+import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.model.RsvpStatus;
 import com.eventmaster.model.RsvpSummaryResponse;
 import com.eventmaster.repository.EventRsvpRepository;
@@ -13,6 +14,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -77,15 +79,18 @@ public class RsvpService {
         return rsvpRepository.findByEventIdAndUsername(eventId, username);
     }
 
-    public List<Event> getRsvpedEvents(String requestedUsername, String authenticatedUsername) {
+    public List<EventSummaryResponse> getRsvpedEvents(String requestedUsername, String authenticatedUsername) {
         if (!requestedUsername.equals(authenticatedUsername)) {
             throw new ForbiddenException("You can only view your own RSVPed events");
         }
+        LocalDateTime now = LocalDateTime.now();
         return rsvpRepository.findByUsernameAndStatusIn(
                 requestedUsername, List.of(RsvpStatus.GOING, RsvpStatus.INTERESTED)
         ).stream()
                 .map(EventRsvp::getEvent)
+                .filter(e -> e.getStartTime() != null && e.getStartTime().isAfter(now))
                 .sorted(Comparator.comparing(Event::getStartTime))
+                .map(eventService::toSummary)
                 .collect(Collectors.toList());
     }
 }

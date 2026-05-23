@@ -1,6 +1,7 @@
 package com.eventmaster.controller;
 
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.service.RsvpService;
 import com.eventmaster.service.SavedEventService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,8 +39,8 @@ public class SavedEventController {
     }
 
     @GetMapping("/users/{username}/rsvped-events")
-    public ResponseEntity<List<Event>> getRsvpedEvents(@PathVariable String username, Authentication authentication) {
-        List<Event> events = rsvpService.getRsvpedEvents(username, authentication.getName());
+    public ResponseEntity<List<EventSummaryResponse>> getRsvpedEvents(@PathVariable String username, Authentication authentication) {
+        List<EventSummaryResponse> events = rsvpService.getRsvpedEvents(username, authentication.getName());
         return ResponseEntity.ok(events);
     }
 }
