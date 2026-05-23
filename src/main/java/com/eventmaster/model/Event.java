@@ -1,6 +1,7 @@
 package com.eventmaster.model;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -41,6 +42,13 @@ public class Event {
 
     @Column(name = "image_url", length = 2048)
     private String imageUrl;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "recurrence_type", nullable = false)
+    private RecurrenceType recurrenceType = RecurrenceType.NONE;
+
+    @Column(name = "recurrence_end_date")
+    private LocalDate recurrenceEndDate;
 
     public Event() {}
 
@@ -87,4 +95,10 @@ public class Event {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public RecurrenceType getRecurrenceType() { return recurrenceType; }
+    public void setRecurrenceType(RecurrenceType recurrenceType) { this.recurrenceType = recurrenceType; }
+
+    public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
+    public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
 }

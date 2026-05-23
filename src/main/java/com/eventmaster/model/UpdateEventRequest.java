@@ -2,6 +2,7 @@ package com.eventmaster.model;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.Size;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class UpdateEventRequest {
@@ -49,4 +50,13 @@ public class UpdateEventRequest {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    private RecurrenceType recurrenceType;
+    private LocalDate recurrenceEndDate;
+
+    public RecurrenceType getRecurrenceType() { return recurrenceType; }
+    public void setRecurrenceType(RecurrenceType recurrenceType) { this.recurrenceType = recurrenceType; }
+
+    public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
+    public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
 }

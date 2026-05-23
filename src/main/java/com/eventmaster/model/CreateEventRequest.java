@@ -1,6 +1,7 @@
 package com.eventmaster.model;
 
 import javax.validation.constraints.*;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class CreateEventRequest {
@@ -29,6 +30,9 @@ public class CreateEventRequest {
     @Size(max = 2048, message = "Image URL must not exceed 2048 characters")
     private String imageUrl;
 
+    private RecurrenceType recurrenceType = RecurrenceType.NONE;
+    private LocalDate recurrenceEndDate;
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
@@ -52,4 +56,10 @@ public class CreateEventRequest {
 
     public String getImageUrl() { return imageUrl; }
     public void setImageUrl(String imageUrl) { this.imageUrl = imageUrl; }
+
+    public RecurrenceType getRecurrenceType() { return recurrenceType; }
+    public void setRecurrenceType(RecurrenceType recurrenceType) { this.recurrenceType = recurrenceType; }
+
+    public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
+    public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
 }

@@ -5,6 +5,7 @@ import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventSummaryResponse;
+import com.eventmaster.model.RecurrenceType;
 import com.eventmaster.model.RsvpStatus;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
@@ -67,6 +68,8 @@ public class EventService {
                 request.getVisibility()
         );
         event.setImageUrl(request.getImageUrl());
+        event.setRecurrenceType(request.getRecurrenceType() != null ? request.getRecurrenceType() : RecurrenceType.NONE);
+        event.setRecurrenceEndDate(request.getRecurrenceEndDate());
         Event saved = eventRepository.save(event);
         logger.info("Event created with id: {} by user: {}", saved.getId(), creatorUsername);
         return saved;
@@ -126,6 +129,11 @@ public class EventService {
         if (request.getCapacity() != null) event.setCapacity(request.getCapacity());
         if (request.getVisibility() != null) event.setVisibility(request.getVisibility());
         if (request.getImageUrl() != null) event.setImageUrl(request.getImageUrl());
+        if (request.getRecurrenceType() != null) {
+            event.setRecurrenceType(request.getRecurrenceType());
+            if (request.getRecurrenceType() == RecurrenceType.NONE) event.setRecurrenceEndDate(null);
+        }
+        if (request.getRecurrenceEndDate() != null) event.setRecurrenceEndDate(request.getRecurrenceEndDate());
         Event updated = eventRepository.save(event);
         logger.info("Event {} updated by user: {}", id, requesterUsername);
         return updated;

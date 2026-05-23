@@ -1,5 +1,6 @@
 package com.eventmaster.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public class EventSummaryResponse {
@@ -17,6 +18,8 @@ public class EventSummaryResponse {
     private String imageUrl;
     private long likeCount;
     private long goingCount;
+    private RecurrenceType recurrenceType;
+    private LocalDate recurrenceEndDate;
 
     public EventSummaryResponse(Event event, long likeCount, long goingCount) {
         this.id = event.getId();
@@ -32,6 +35,8 @@ public class EventSummaryResponse {
         this.imageUrl = event.getImageUrl();
         this.likeCount = likeCount;
         this.goingCount = goingCount;
+        this.recurrenceType = event.getRecurrenceType();
+        this.recurrenceEndDate = event.getRecurrenceEndDate();
     }
 
     public Long getId() { return id; }
@@ -47,4 +52,6 @@ public class EventSummaryResponse {
     public String getImageUrl() { return imageUrl; }
     public long getLikeCount() { return likeCount; }
     public long getGoingCount() { return goingCount; }
+    public RecurrenceType getRecurrenceType() { return recurrenceType; }
+    public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
 }
