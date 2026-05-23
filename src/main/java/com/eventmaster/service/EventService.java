@@ -4,6 +4,7 @@ import com.eventmaster.exception.EventNotFoundException;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventCategory;
 import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.model.RecurrenceType;
 import com.eventmaster.model.RsvpStatus;
@@ -70,6 +71,7 @@ public class EventService {
         event.setImageUrl(request.getImageUrl());
         event.setRecurrenceType(request.getRecurrenceType() != null ? request.getRecurrenceType() : RecurrenceType.NONE);
         event.setRecurrenceEndDate(request.getRecurrenceEndDate());
+        event.setCategory(request.getCategory() != null ? request.getCategory() : EventCategory.OTHER);
         Event saved = eventRepository.save(event);
         logger.info("Event created with id: {} by user: {}", saved.getId(), creatorUsername);
         return saved;
@@ -134,6 +136,7 @@ public class EventService {
             if (request.getRecurrenceType() == RecurrenceType.NONE) event.setRecurrenceEndDate(null);
         }
         if (request.getRecurrenceEndDate() != null) event.setRecurrenceEndDate(request.getRecurrenceEndDate());
+        if (request.getCategory() != null) event.setCategory(request.getCategory());
         Event updated = eventRepository.save(event);
         logger.info("Event {} updated by user: {}", id, requesterUsername);
         return updated;

@@ -50,6 +50,10 @@ public class Event {
     @Column(name = "recurrence_end_date")
     private LocalDate recurrenceEndDate;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private EventCategory category = EventCategory.OTHER;
+
     public Event() {}
 
     public Event(String title, String description, String location,
@@ -101,4 +105,7 @@ public class Event {
 
     public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
     public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
+
+    public EventCategory getCategory() { return category; }
+    public void setCategory(EventCategory category) { this.category = category; }
 }

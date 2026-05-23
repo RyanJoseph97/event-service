@@ -53,10 +53,14 @@ public class UpdateEventRequest {
 
     private RecurrenceType recurrenceType;
     private LocalDate recurrenceEndDate;
+    private EventCategory category;
 
     public RecurrenceType getRecurrenceType() { return recurrenceType; }
     public void setRecurrenceType(RecurrenceType recurrenceType) { this.recurrenceType = recurrenceType; }
 
     public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
     public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
+
+    public EventCategory getCategory() { return category; }
+    public void setCategory(EventCategory category) { this.category = category; }
 }

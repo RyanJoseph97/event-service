@@ -33,6 +33,9 @@ public class CreateEventRequest {
     private RecurrenceType recurrenceType = RecurrenceType.NONE;
     private LocalDate recurrenceEndDate;
 
+    @NotNull(message = "Category is required")
+    private EventCategory category;
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
 
@@ -62,4 +65,7 @@ public class CreateEventRequest {
 
     public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
     public void setRecurrenceEndDate(LocalDate recurrenceEndDate) { this.recurrenceEndDate = recurrenceEndDate; }
+
+    public EventCategory getCategory() { return category; }
+    public void setCategory(EventCategory category) { this.category = category; }
 }

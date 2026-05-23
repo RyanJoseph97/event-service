@@ -274,6 +274,7 @@ public class EventServiceTest {
         ReflectionTestUtils.setField(req, "location", "Test location");
         ReflectionTestUtils.setField(req, "startTime", LocalDateTime.of(2025, 8, 1, 12, 0));
         ReflectionTestUtils.setField(req, "visibility", visibility);
+        ReflectionTestUtils.setField(req, "category", com.eventmaster.model.EventCategory.SOCIAL);
         return req;
     }
 }
