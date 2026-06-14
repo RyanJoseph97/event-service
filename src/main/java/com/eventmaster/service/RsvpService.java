@@ -84,7 +84,7 @@ public class RsvpService {
             throw new ForbiddenException("You can only view your own RSVPed events");
         }
         LocalDateTime now = LocalDateTime.now();
-        return rsvpRepository.findByUsernameAndStatusIn(
+        return rsvpRepository.findByUsernameAndStatusInWithEvent(
                 requestedUsername, List.of(RsvpStatus.GOING, RsvpStatus.INTERESTED)
         ).stream()
                 .map(EventRsvp::getEvent)

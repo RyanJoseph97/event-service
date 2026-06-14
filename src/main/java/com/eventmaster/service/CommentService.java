@@ -1,8 +1,10 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.exception.CommentNotFoundException;
 import com.eventmaster.model.Comment;
 import com.eventmaster.model.CommentLike;
+import com.eventmaster.model.CommentResponse;
 import com.eventmaster.repository.CommentLikeRepository;
 import com.eventmaster.repository.CommentRepository;
 import org.slf4j.Logger;
@@ -12,7 +14,10 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class CommentService {
@@ -28,6 +33,9 @@ public class CommentService {
     @Autowired
     private EventService eventService;
 
+    @Autowired
+    private UserServiceClient userServiceClient;
+
     @Transactional
     public Comment createComment(Long eventId, String content, String username) {
         eventService.findById(eventId);
@@ -37,9 +45,15 @@ public class CommentService {
         return saved;
     }
 
-    public List<Comment> getCommentsByEventId(Long eventId) {
+    public List<CommentResponse> getCommentsByEventId(Long eventId) {
         eventService.findById(eventId);
-        return commentRepository.findByEventId(eventId);
+        List<Comment> comments = commentRepository.findByEventId(eventId);
+        Map<String, String> profilePicByUsername = new HashMap<>();
+        comments.stream().map(Comment::getUsername).distinct()
+                .forEach(u -> profilePicByUsername.put(u, userServiceClient.getProfilePictureUrl(u)));
+        return comments.stream()
+                .map(c -> new CommentResponse(c, profilePicByUsername.get(c.getUsername())))
+                .collect(Collectors.toList());
     }
 
     public Comment findById(Long id) {

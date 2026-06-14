@@ -63,4 +63,13 @@ public class UpdateEventRequest {
 
     public EventCategory getCategory() { return category; }
     public void setCategory(EventCategory category) { this.category = category; }
+
+    private Double latitude;
+    private Double longitude;
+
+    public Double getLatitude() { return latitude; }
+    public void setLatitude(Double latitude) { this.latitude = latitude; }
+
+    public Double getLongitude() { return longitude; }
+    public void setLongitude(Double longitude) { this.longitude = longitude; }
 }

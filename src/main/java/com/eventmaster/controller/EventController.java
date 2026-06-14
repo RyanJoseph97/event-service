@@ -3,6 +3,7 @@ package com.eventmaster.controller;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventCategory;
 import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
@@ -46,17 +47,19 @@ public class EventController {
 
     @GetMapping
     public ResponseEntity<Page<EventSummaryResponse>> getAllEvents(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String creatorUsername,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAfter,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startBefore,
             @RequestParam(required = false) Visibility visibility,
+            @RequestParam(required = false) EventCategory category,
             @PageableDefault(size = 20) Pageable pageable,
             Authentication authentication) {
-        logger.debug("GET /events location={} creatorUsername={} startAfter={} startBefore={} visibility={}",
-                location, creatorUsername, startAfter, startBefore, visibility);
-        return ResponseEntity.ok(eventService.getAllEvents(location, creatorUsername, null,
-                startAfter, startBefore, visibility, pageable, viewerUsername(authentication))
+        logger.debug("GET /events keyword={} location={} creatorUsername={} startAfter={} startBefore={} visibility={} category={}",
+                keyword, location, creatorUsername, startAfter, startBefore, visibility, category);
+        return ResponseEntity.ok(eventService.getAllEvents(keyword, location, creatorUsername, null,
+                startAfter, startBefore, visibility, category, pageable, viewerUsername(authentication))
                 .map(eventService::toSummary));
     }
 

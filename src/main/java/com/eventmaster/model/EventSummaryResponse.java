@@ -21,6 +21,8 @@ public class EventSummaryResponse {
     private RecurrenceType recurrenceType;
     private LocalDate recurrenceEndDate;
     private EventCategory category;
+    private Double latitude;
+    private Double longitude;
 
     public EventSummaryResponse(Event event, long likeCount, long goingCount) {
         this.id = event.getId();
@@ -39,6 +41,8 @@ public class EventSummaryResponse {
         this.recurrenceType = event.getRecurrenceType();
         this.recurrenceEndDate = event.getRecurrenceEndDate();
         this.category = event.getCategory();
+        this.latitude = event.getLatitude();
+        this.longitude = event.getLongitude();
     }
 
     public Long getId() { return id; }
@@ -57,4 +61,6 @@ public class EventSummaryResponse {
     public RecurrenceType getRecurrenceType() { return recurrenceType; }
     public LocalDate getRecurrenceEndDate() { return recurrenceEndDate; }
     public EventCategory getCategory() { return category; }
+    public Double getLatitude() { return latitude; }
+    public Double getLongitude() { return longitude; }
 }

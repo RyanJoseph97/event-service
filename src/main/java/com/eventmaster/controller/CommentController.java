@@ -1,6 +1,7 @@
 package com.eventmaster.controller;
 
 import com.eventmaster.model.Comment;
+import com.eventmaster.model.CommentResponse;
 import com.eventmaster.model.CreateCommentRequest;
 import com.eventmaster.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class CommentController {
     }
 
     @GetMapping("/events/{eventId}/comments")
-    public ResponseEntity<List<Comment>> getComments(@PathVariable Long eventId) {
+    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long eventId) {
         return ResponseEntity.ok(commentService.getCommentsByEventId(eventId));
     }
 

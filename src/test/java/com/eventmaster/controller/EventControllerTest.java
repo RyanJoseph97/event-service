@@ -12,7 +12,6 @@ import com.eventmaster.service.EventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
@@ -35,7 +34,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// Note: getAllEvents now takes (location, creatorUsername, startAfter, startBefore, visibility)
+// Note: getAllEvents takes (keyword, location, creatorUsername, creatorUsernames, startAfter, startBefore, visibility, category, pageable, viewerUsername)
 
 public class EventControllerTest {
 
@@ -100,7 +99,7 @@ public class EventControllerTest {
 
     @Test
     public void getAllEvents_noParams_returns200WithList() throws Exception {
-        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class), isNull()))
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class), isNull()))
                 .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events"))
@@ -110,7 +109,7 @@ public class EventControllerTest {
 
     @Test
     public void getAllEvents_withLocationFilter_passesParamToService() throws Exception {
-        when(eventService.getAllEvents(eq("Austin"), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class), isNull()))
+        when(eventService.getAllEvents(isNull(), eq("Austin"), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class), isNull()))
                 .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events").param("location", "Austin"))
@@ -120,7 +119,7 @@ public class EventControllerTest {
 
     @Test
     public void getAllEvents_withVisibilityFilter_passesParamToService() throws Exception {
-        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC), any(Pageable.class), isNull()))
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC), isNull(), any(Pageable.class), isNull()))
                 .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events").param("visibility", "PUBLIC"))

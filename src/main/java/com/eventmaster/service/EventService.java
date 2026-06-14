@@ -57,6 +57,9 @@ public class EventService {
     @Autowired
     private EventInviteRepository eventInviteRepository;
 
+    @org.springframework.beans.factory.annotation.Value("${app.search.fts.enabled:false}")
+    private boolean ftsEnabled;
+
     public Event createEvent(CreateEventRequest request, String creatorUsername) {
         Event event = new Event(
                 request.getTitle(),
@@ -72,6 +75,8 @@ public class EventService {
         event.setRecurrenceType(request.getRecurrenceType() != null ? request.getRecurrenceType() : RecurrenceType.NONE);
         event.setRecurrenceEndDate(request.getRecurrenceEndDate());
         event.setCategory(request.getCategory() != null ? request.getCategory() : EventCategory.OTHER);
+        event.setLatitude(request.getLatitude());
+        event.setLongitude(request.getLongitude());
         Event saved = eventRepository.save(event);
         logger.info("Event created with id: {} by user: {}", saved.getId(), creatorUsername);
         return saved;
@@ -93,18 +98,32 @@ public class EventService {
         return event;
     }
 
-    public Page<Event> getAllEvents(String location, String creatorUsername,
+    public Page<Event> getAllEvents(String keyword, String location, String creatorUsername,
                                     List<String> creatorUsernames,
                                     LocalDateTime startAfter, LocalDateTime startBefore,
-                                    Visibility visibility, Pageable pageable,
-                                    String viewerUsername) {
+                                    Visibility visibility, EventCategory category,
+                                    Pageable pageable, String viewerUsername) {
+        if (keyword != null && ftsEnabled) {
+            List<Long> invitedIds = viewerUsername != null
+                    ? eventInviteRepository.findEventIdsByInviteeUsername(viewerUsername)
+                    : Collections.emptyList();
+            List<Long> safeInvitedIds = invitedIds.isEmpty() ? Collections.singletonList(-1L) : invitedIds;
+            return eventRepository.fullTextSearch(
+                    keyword, location,
+                    category != null ? category.name() : null,
+                    startAfter, startBefore,
+                    creatorUsername, viewerUsername,
+                    safeInvitedIds, pageable);
+        }
         Specification<Event> spec = Specification.where(null);
-        if (location != null)                                    spec = spec.and(EventSpecification.locationContains(location));
+        if (keyword != null)                                         spec = spec.and(EventSpecification.keywordContains(keyword));
+        if (location != null)                                        spec = spec.and(EventSpecification.locationContains(location));
         if (creatorUsernames != null && !creatorUsernames.isEmpty()) spec = spec.and(EventSpecification.creatorUsernameIn(creatorUsernames));
-        else if (creatorUsername != null)                        spec = spec.and(EventSpecification.creatorUsernameEquals(creatorUsername));
-        if (startAfter != null)                                  spec = spec.and(EventSpecification.startAfter(startAfter));
-        if (startBefore != null)                                 spec = spec.and(EventSpecification.startBefore(startBefore));
-        if (visibility != null)                                  spec = spec.and(EventSpecification.visibilityEquals(visibility));
+        else if (creatorUsername != null)                            spec = spec.and(EventSpecification.creatorUsernameEquals(creatorUsername));
+        if (startAfter != null)                                      spec = spec.and(EventSpecification.startAfter(startAfter));
+        if (startBefore != null)                                     spec = spec.and(EventSpecification.startBefore(startBefore));
+        if (visibility != null)                                      spec = spec.and(EventSpecification.visibilityEquals(visibility));
+        if (category != null)                                        spec = spec.and(EventSpecification.categoryEquals(category));
         if (viewerUsername == null) {
             spec = spec.and(EventSpecification.visibilityEquals(Visibility.PUBLIC));
         } else {
@@ -137,6 +156,8 @@ public class EventService {
         }
         if (request.getRecurrenceEndDate() != null) event.setRecurrenceEndDate(request.getRecurrenceEndDate());
         if (request.getCategory() != null) event.setCategory(request.getCategory());
+        if (request.getLatitude() != null) event.setLatitude(request.getLatitude());
+        if (request.getLongitude() != null) event.setLongitude(request.getLongitude());
         Event updated = eventRepository.save(event);
         logger.info("Event {} updated by user: {}", id, requesterUsername);
         return updated;

@@ -101,7 +101,7 @@ public class SavedEventServiceTest {
     @Test
     public void getSavedEvents_ownEvents_returnsEventList() {
         SavedEvent saved = new SavedEvent(event, "bob");
-        when(savedEventRepository.findByUsername("bob")).thenReturn(List.of(saved));
+        when(savedEventRepository.findByUsernameWithEvent("bob")).thenReturn(List.of(saved));
 
         List<Event> result = savedEventService.getSavedEvents("bob", "bob");
 
@@ -111,7 +111,7 @@ public class SavedEventServiceTest {
 
     @Test
     public void getSavedEvents_noSavedEvents_returnsEmptyList() {
-        when(savedEventRepository.findByUsername("bob")).thenReturn(List.of());
+        when(savedEventRepository.findByUsernameWithEvent("bob")).thenReturn(List.of());
 
         List<Event> result = savedEventService.getSavedEvents("bob", "bob");
 
@@ -122,6 +122,6 @@ public class SavedEventServiceTest {
     public void getSavedEvents_otherUserEvents_throwsForbidden() {
         assertThrows(ForbiddenException.class,
                 () -> savedEventService.getSavedEvents("alice", "bob"));
-        verify(savedEventRepository, never()).findByUsername(any());
+        verify(savedEventRepository, never()).findByUsernameWithEvent(any());
     }
 }

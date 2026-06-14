@@ -1,9 +1,11 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.exception.CommentNotFoundException;
 import com.eventmaster.exception.EventNotFoundException;
 import com.eventmaster.model.Comment;
 import com.eventmaster.model.CommentLike;
+import com.eventmaster.model.CommentResponse;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.repository.CommentLikeRepository;
@@ -31,6 +33,9 @@ public class CommentServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private UserServiceClient userServiceClient;
 
     @InjectMocks
     private CommentService commentService;
@@ -90,11 +95,13 @@ public class CommentServiceTest {
     public void getCommentsByEventId_returnsCommentList() {
         when(eventService.findById(1L)).thenReturn(event);
         when(commentRepository.findByEventId(1L)).thenReturn(List.of(comment));
+        when(userServiceClient.getProfilePictureUrl("bob")).thenReturn("https://example.com/bob.jpg");
 
-        List<Comment> result = commentService.getCommentsByEventId(1L);
+        List<CommentResponse> result = commentService.getCommentsByEventId(1L);
 
         assertEquals(1, result.size());
         assertEquals("bob", result.get(0).getUsername());
+        assertEquals("https://example.com/bob.jpg", result.get(0).getProfilePictureUrl());
     }
 
     @Test

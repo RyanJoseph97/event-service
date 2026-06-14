@@ -53,7 +53,7 @@ public class SavedEventService {
         if (!requestedUsername.equals(authenticatedUsername)) {
             throw new ForbiddenException("You can only view your own saved events");
         }
-        return savedEventRepository.findByUsername(requestedUsername).stream()
+        return savedEventRepository.findByUsernameWithEvent(requestedUsername).stream()
                 .map(SavedEvent::getEvent)
                 .collect(Collectors.toList());
     }
