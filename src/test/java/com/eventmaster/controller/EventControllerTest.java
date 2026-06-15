@@ -146,7 +146,7 @@ public class EventControllerTest {
                 .thenReturn(sampleEvent);
 
         String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
-                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\"}";
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\",\"category\":\"MUSIC\"}";
 
         mockMvc.perform(post("/events")
                         .with(auth("alice", "VERIFIED"))
@@ -162,7 +162,7 @@ public class EventControllerTest {
                 .thenReturn(sampleEvent);
 
         String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
-                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\"}";
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\",\"category\":\"MUSIC\"}";
 
         mockMvc.perform(post("/events")
                         .with(auth("admin", "TRUSTED"))
@@ -174,7 +174,7 @@ public class EventControllerTest {
     @Test
     public void createPublicEvent_asUnverifiedUser_returns403() throws Exception {
         String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
-                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\"}";
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\",\"category\":\"MUSIC\"}";
 
         mockMvc.perform(post("/events")
                         .with(auth("newuser", "UNVERIFIED"))
@@ -193,7 +193,7 @@ public class EventControllerTest {
                 .thenReturn(privateEvent);
 
         String body = "{\"title\":\"Private Party\",\"description\":\"Invite only\",\"location\":\"Home\","
-                + "\"startTime\":\"2025-06-01T18:00:00\",\"visibility\":\"INVITE_ONLY\"}";
+                + "\"startTime\":\"2025-06-01T18:00:00\",\"visibility\":\"INVITE_ONLY\",\"category\":\"SOCIAL\"}";
 
         mockMvc.perform(post("/events")
                         .with(auth("newuser", "UNVERIFIED"))
@@ -238,7 +238,7 @@ public class EventControllerTest {
                 .thenReturn(eventWithImage);
 
         String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
-                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\","
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\",\"category\":\"MUSIC\","
                 + "\"imageUrl\":\"https://example.com/image.jpg\"}";
 
         mockMvc.perform(post("/events")
