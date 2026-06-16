@@ -75,7 +75,7 @@ public class RsvpService {
     }
 
     public java.util.Optional<EventRsvp> getMyRsvp(Long eventId, String username) {
-        eventService.findById(eventId); // verify event exists
+        eventService.findById(eventId, username);
         return rsvpRepository.findByEventIdAndUsername(eventId, username);
     }
 
@@ -84,13 +84,13 @@ public class RsvpService {
             throw new ForbiddenException("You can only view your own RSVPed events");
         }
         LocalDateTime now = LocalDateTime.now();
-        return rsvpRepository.findByUsernameAndStatusInWithEvent(
+        List<Event> upcoming = rsvpRepository.findByUsernameAndStatusInWithEvent(
                 requestedUsername, List.of(RsvpStatus.GOING, RsvpStatus.INTERESTED)
         ).stream()
                 .map(EventRsvp::getEvent)
                 .filter(e -> e.getStartTime() != null && e.getStartTime().isAfter(now))
                 .sorted(Comparator.comparing(Event::getStartTime))
-                .map(eventService::toSummary)
                 .collect(Collectors.toList());
+        return eventService.toSummaries(upcoming);
     }
 }

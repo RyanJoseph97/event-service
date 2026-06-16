@@ -3,7 +3,9 @@ package com.eventmaster.controller;
 import com.eventmaster.model.InviteRequest;
 import com.eventmaster.service.EventInviteService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,6 +21,9 @@ public class InviteController {
 
     @GetMapping("/{id}/invites")
     public ResponseEntity<List<String>> getInvitees(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
         return ResponseEntity.ok(inviteService.getInvitees(id, authentication.getName()));
     }
 

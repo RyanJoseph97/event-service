@@ -28,8 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class EventService {
@@ -167,6 +169,20 @@ public class EventService {
         long likeCount = eventLikeRepository.countByEventId(event.getId());
         long goingCount = eventRsvpRepository.countByEventIdAndStatus(event.getId(), RsvpStatus.GOING);
         return new EventSummaryResponse(event, likeCount, goingCount);
+    }
+
+    public List<EventSummaryResponse> toSummaries(List<Event> events) {
+        if (events.isEmpty()) return List.of();
+        List<Long> ids = events.stream().map(Event::getId).collect(Collectors.toList());
+        Map<Long, Long> likeCounts = eventLikeRepository.countGroupedByEventId(ids).stream()
+                .collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
+        Map<Long, Long> goingCounts = eventRsvpRepository.countByStatusGroupedByEventId(ids, RsvpStatus.GOING).stream()
+                .collect(Collectors.toMap(r -> (Long) r[0], r -> (Long) r[1]));
+        return events.stream()
+                .map(e -> new EventSummaryResponse(e,
+                        likeCounts.getOrDefault(e.getId(), 0L),
+                        goingCounts.getOrDefault(e.getId(), 0L)))
+                .collect(Collectors.toList());
     }
 
     @Transactional

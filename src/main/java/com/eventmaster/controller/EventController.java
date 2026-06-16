@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -58,9 +59,9 @@ public class EventController {
             Authentication authentication) {
         logger.debug("GET /events keyword={} location={} creatorUsername={} startAfter={} startBefore={} visibility={} category={}",
                 keyword, location, creatorUsername, startAfter, startBefore, visibility, category);
-        return ResponseEntity.ok(eventService.getAllEvents(keyword, location, creatorUsername, null,
-                startAfter, startBefore, visibility, category, pageable, viewerUsername(authentication))
-                .map(eventService::toSummary));
+        Page<Event> page = eventService.getAllEvents(keyword, location, creatorUsername, null,
+                startAfter, startBefore, visibility, category, pageable, viewerUsername(authentication));
+        return ResponseEntity.ok(new PageImpl<>(eventService.toSummaries(page.getContent()), pageable, page.getTotalElements()));
     }
 
     private String viewerUsername(Authentication authentication) {

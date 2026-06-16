@@ -7,6 +7,7 @@ import com.eventmaster.service.CommentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,8 +28,14 @@ public class CommentController {
     }
 
     @GetMapping("/events/{eventId}/comments")
-    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long eventId) {
-        return ResponseEntity.ok(commentService.getCommentsByEventId(eventId));
+    public ResponseEntity<List<CommentResponse>> getComments(@PathVariable Long eventId,
+            Authentication authentication) {
+        return ResponseEntity.ok(commentService.getCommentsByEventId(eventId, viewerUsername(authentication)));
+    }
+
+    private String viewerUsername(Authentication authentication) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) return null;
+        return authentication.getName();
     }
 
     @PostMapping("/comments/{commentId}/like")

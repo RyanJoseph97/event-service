@@ -38,15 +38,15 @@ public class CommentService {
 
     @Transactional
     public Comment createComment(Long eventId, String content, String username) {
-        eventService.findById(eventId);
+        eventService.findById(eventId, username);
         Comment comment = new Comment(eventId, username, content);
         Comment saved = commentRepository.save(comment);
         logger.info("User '{}' commented on event {}", username, eventId);
         return saved;
     }
 
-    public List<CommentResponse> getCommentsByEventId(Long eventId) {
-        eventService.findById(eventId);
+    public List<CommentResponse> getCommentsByEventId(Long eventId, String viewerUsername) {
+        eventService.findById(eventId, viewerUsername);
         List<Comment> comments = commentRepository.findByEventId(eventId);
         Map<String, String> profilePicByUsername = new HashMap<>();
         comments.stream().map(Comment::getUsername).distinct()
@@ -64,6 +64,7 @@ public class CommentService {
     @Transactional
     public void likeComment(Long commentId, String username) {
         Comment comment = findById(commentId);
+        eventService.findById(comment.getEventId(), username);
         if (commentLikeRepository.existsByCommentIdAndUsername(commentId, username)) {
             throw new IllegalStateException("You have already liked this comment");
         }
@@ -77,7 +78,8 @@ public class CommentService {
 
     @Transactional
     public void unlikeComment(Long commentId, String username) {
-        findById(commentId);
+        Comment comment = findById(commentId);
+        eventService.findById(comment.getEventId(), username);
         if (!commentLikeRepository.existsByCommentIdAndUsername(commentId, username)) {
             throw new IllegalStateException("You have not liked this comment");
         }

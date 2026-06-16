@@ -43,7 +43,7 @@ public class SavedEventServiceTest {
 
     @Test
     public void save_success_savesSavedEvent() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(1L, "bob")).thenReturn(event);
         when(savedEventRepository.existsByUsernameAndEventId("bob", 1L)).thenReturn(false);
 
         savedEventService.save(1L, "bob");
@@ -53,7 +53,7 @@ public class SavedEventServiceTest {
 
     @Test
     public void save_alreadySaved_throwsIllegalState() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(1L, "bob")).thenReturn(event);
         when(savedEventRepository.existsByUsernameAndEventId("bob", 1L)).thenReturn(true);
 
         assertThrows(IllegalStateException.class, () -> savedEventService.save(1L, "bob"));
@@ -62,7 +62,7 @@ public class SavedEventServiceTest {
 
     @Test
     public void save_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(99L, "bob")).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class, () -> savedEventService.save(99L, "bob"));
         verify(savedEventRepository, never()).save(any());
@@ -72,7 +72,7 @@ public class SavedEventServiceTest {
 
     @Test
     public void unsave_success_deletesRecord() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(1L, "bob")).thenReturn(event);
         when(savedEventRepository.existsByUsernameAndEventId("bob", 1L)).thenReturn(true);
 
         savedEventService.unsave(1L, "bob");
@@ -82,7 +82,7 @@ public class SavedEventServiceTest {
 
     @Test
     public void unsave_notSaved_throwsIllegalState() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(1L, "bob")).thenReturn(event);
         when(savedEventRepository.existsByUsernameAndEventId("bob", 1L)).thenReturn(false);
 
         assertThrows(IllegalStateException.class, () -> savedEventService.unsave(1L, "bob"));
@@ -91,7 +91,7 @@ public class SavedEventServiceTest {
 
     @Test
     public void unsave_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(99L, "bob")).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class, () -> savedEventService.unsave(99L, "bob"));
     }

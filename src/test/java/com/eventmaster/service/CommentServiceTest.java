@@ -58,7 +58,7 @@ public class CommentServiceTest {
 
     @Test
     public void createComment_validEventAndUser_savesComment() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(1L, "bob")).thenReturn(event);
         when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Comment result = commentService.createComment(1L, "Great event!", "bob");
@@ -72,7 +72,7 @@ public class CommentServiceTest {
 
     @Test
     public void createComment_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(99L, "bob")).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class,
                 () -> commentService.createComment(99L, "Hello", "bob"));
@@ -81,7 +81,7 @@ public class CommentServiceTest {
 
     @Test
     public void createComment_setsCreatedAt() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(1L, "alice")).thenReturn(event);
         when(commentRepository.save(any(Comment.class))).thenAnswer(inv -> inv.getArgument(0));
 
         Comment result = commentService.createComment(1L, "content", "alice");
@@ -93,11 +93,11 @@ public class CommentServiceTest {
 
     @Test
     public void getCommentsByEventId_returnsCommentList() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(1L, "viewer")).thenReturn(event);
         when(commentRepository.findByEventId(1L)).thenReturn(List.of(comment));
         when(userServiceClient.getProfilePictureUrl("bob")).thenReturn("https://example.com/bob.jpg");
 
-        List<CommentResponse> result = commentService.getCommentsByEventId(1L);
+        List<CommentResponse> result = commentService.getCommentsByEventId(1L, "viewer");
 
         assertEquals(1, result.size());
         assertEquals("bob", result.get(0).getUsername());
@@ -106,18 +106,18 @@ public class CommentServiceTest {
 
     @Test
     public void getCommentsByEventId_noComments_returnsEmptyList() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(1L, "viewer")).thenReturn(event);
         when(commentRepository.findByEventId(1L)).thenReturn(List.of());
 
-        assertTrue(commentService.getCommentsByEventId(1L).isEmpty());
+        assertTrue(commentService.getCommentsByEventId(1L, "viewer").isEmpty());
     }
 
     @Test
     public void getCommentsByEventId_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(99L, "viewer")).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class,
-                () -> commentService.getCommentsByEventId(99L));
+                () -> commentService.getCommentsByEventId(99L, "viewer"));
     }
 
     // --- findById ---
@@ -145,6 +145,7 @@ public class CommentServiceTest {
     @Test
     public void likeComment_success_savesCommentLike() {
         when(commentRepository.findById(10L)).thenReturn(Optional.of(comment));
+        when(eventService.findById(1L, "alice")).thenReturn(event);
         when(commentLikeRepository.existsByCommentIdAndUsername(10L, "alice")).thenReturn(false);
 
         commentService.likeComment(10L, "alice");
@@ -155,6 +156,7 @@ public class CommentServiceTest {
     @Test
     public void likeComment_alreadyLiked_throwsIllegalState() {
         when(commentRepository.findById(10L)).thenReturn(Optional.of(comment));
+        when(eventService.findById(1L, "alice")).thenReturn(event);
         when(commentLikeRepository.existsByCommentIdAndUsername(10L, "alice")).thenReturn(true);
 
         assertThrows(IllegalStateException.class, () -> commentService.likeComment(10L, "alice"));
@@ -173,6 +175,7 @@ public class CommentServiceTest {
     @Test
     public void unlikeComment_success_deletesLike() {
         when(commentRepository.findById(10L)).thenReturn(Optional.of(comment));
+        when(eventService.findById(1L, "alice")).thenReturn(event);
         when(commentLikeRepository.existsByCommentIdAndUsername(10L, "alice")).thenReturn(true);
 
         commentService.unlikeComment(10L, "alice");
@@ -183,6 +186,7 @@ public class CommentServiceTest {
     @Test
     public void unlikeComment_notLiked_throwsIllegalState() {
         when(commentRepository.findById(10L)).thenReturn(Optional.of(comment));
+        when(eventService.findById(1L, "alice")).thenReturn(event);
         when(commentLikeRepository.existsByCommentIdAndUsername(10L, "alice")).thenReturn(false);
 
         assertThrows(IllegalStateException.class, () -> commentService.unlikeComment(10L, "alice"));

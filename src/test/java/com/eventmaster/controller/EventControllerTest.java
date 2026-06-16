@@ -59,8 +59,13 @@ public class EventControllerTest {
                 LocalDateTime.of(2025, 6, 1, 20, 0), null, 100, "alice", Visibility.PUBLIC);
         ReflectionTestUtils.setField(sampleEvent, "id", 1L);
 
-        when(eventService.toSummary(any(Event.class)))
-                .thenAnswer(inv -> new EventSummaryResponse(inv.getArgument(0), 0L, 0L));
+        when(eventService.toSummaries(anyList()))
+                .thenAnswer(inv -> {
+                    List<Event> events = inv.getArgument(0);
+                    return events.stream()
+                            .map(e -> new EventSummaryResponse(e, 0L, 0L))
+                            .collect(Collectors.toList());
+                });
     }
 
     /** Sets request principal so Spring MVC injects Authentication into controller params. */

@@ -27,7 +27,7 @@ public class SavedEventService {
 
     @Transactional
     public void save(Long eventId, String username) {
-        Event event = eventService.findById(eventId);
+        Event event = eventService.findById(eventId, username);
         if (savedEventRepository.existsByUsernameAndEventId(username, eventId)) {
             throw new IllegalStateException("You have already saved this event");
         }
@@ -41,7 +41,7 @@ public class SavedEventService {
 
     @Transactional
     public void unsave(Long eventId, String username) {
-        eventService.findById(eventId);
+        eventService.findById(eventId, username);
         if (!savedEventRepository.existsByUsernameAndEventId(username, eventId)) {
             throw new IllegalStateException("You have not saved this event");
         }

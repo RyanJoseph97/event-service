@@ -54,6 +54,7 @@ public class LikeService {
     }
 
     public boolean isLikedByUser(Long eventId, String username) {
+        eventService.findById(eventId, username);
         return likeRepository.existsByEventIdAndUsername(eventId, username);
     }
 }
