@@ -8,12 +8,18 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Component
 public class UserServiceClient {
 
     private static final Logger logger = LoggerFactory.getLogger(UserServiceClient.class);
+
+    private final Cache<String, String> profilePictureCache;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -21,7 +27,18 @@ public class UserServiceClient {
     @Value("${user.service.base-url}")
     private String userServiceBaseUrl;
 
+    public UserServiceClient(
+            @Value("${user.service.profile-picture-cache-ttl-minutes:60}") int cacheTtlMinutes) {
+        this.profilePictureCache = Caffeine.newBuilder()
+                .expireAfterWrite(cacheTtlMinutes, TimeUnit.MINUTES)
+                .build();
+    }
+
     public String getProfilePictureUrl(String username) {
+        return profilePictureCache.get(username, this::fetchProfilePictureUrl);
+    }
+
+    private String fetchProfilePictureUrl(String username) {
         try {
             @SuppressWarnings("unchecked")
             Map<String, Object> user = restTemplate.getForObject(
