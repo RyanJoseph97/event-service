@@ -36,7 +36,7 @@ public class RsvpService {
      */
     @Transactional
     public EventRsvp upsertRsvp(Long eventId, String username, RsvpStatus status) {
-        Event event = eventService.findById(eventId);
+        Event event = eventService.findById(eventId, username);
         try {
             // Use map() so setStatus() (which stamps updatedAt) only runs on existing RSVPs,
             // not on a freshly constructed one where updatedAt should remain null.
@@ -58,7 +58,7 @@ public class RsvpService {
 
     @Transactional
     public void removeRsvp(Long eventId, String username) {
-        eventService.findById(eventId); // verify event exists
+        eventService.findById(eventId, username);
         if (!rsvpRepository.existsByEventIdAndUsername(eventId, username)) {
             throw new IllegalStateException("You do not have an RSVP for this event");
         }
@@ -67,7 +67,7 @@ public class RsvpService {
     }
 
     public RsvpSummaryResponse getSummary(Long eventId) {
-        eventService.findById(eventId); // verify event exists
+        eventService.findById(eventId, null);
         long going      = rsvpRepository.countByEventIdAndStatus(eventId, RsvpStatus.GOING);
         long interested = rsvpRepository.countByEventIdAndStatus(eventId, RsvpStatus.INTERESTED);
         long notGoing   = rsvpRepository.countByEventIdAndStatus(eventId, RsvpStatus.NOT_GOING);

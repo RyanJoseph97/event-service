@@ -130,7 +130,7 @@ public class EventServiceTest {
     public void findById_found_returnsEvent() {
         when(eventRepository.findById(1L)).thenReturn(Optional.of(sampleEvent));
 
-        Event result = eventService.findById(1L);
+        Event result = eventService.findById(1L, null);
 
         assertNotNull(result);
         assertEquals("Music Night", result.getTitle());
@@ -140,7 +140,7 @@ public class EventServiceTest {
     public void findById_notFound_throwsEventNotFoundException() {
         when(eventRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(EventNotFoundException.class, () -> eventService.findById(99L));
+        assertThrows(EventNotFoundException.class, () -> eventService.findById(99L, null));
     }
 
     // --- getAllEvents ---

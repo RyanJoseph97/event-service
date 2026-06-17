@@ -22,7 +22,7 @@ public class EventInviteService {
     private EventService eventService;
 
     public List<String> getInvitees(Long eventId, String requesterUsername) {
-        Event event = eventService.findById(eventId);
+        Event event = eventService.findById(eventId, requesterUsername);
         if (!event.getCreatorUsername().equals(requesterUsername)) {
             throw new ForbiddenException("Only the event creator can view invites");
         }
@@ -33,7 +33,7 @@ public class EventInviteService {
 
     @Transactional
     public void invite(Long eventId, String inviteeUsername, String requesterUsername) {
-        Event event = eventService.findById(eventId);
+        Event event = eventService.findById(eventId, requesterUsername);
         if (!event.getCreatorUsername().equals(requesterUsername)) {
             throw new ForbiddenException("Only the event creator can send invites");
         }
@@ -51,7 +51,7 @@ public class EventInviteService {
 
     @Transactional
     public void revoke(Long eventId, String inviteeUsername, String requesterUsername) {
-        Event event = eventService.findById(eventId);
+        Event event = eventService.findById(eventId, requesterUsername);
         if (!event.getCreatorUsername().equals(requesterUsername)) {
             throw new ForbiddenException("Only the event creator can revoke invites");
         }

@@ -86,7 +86,7 @@ public class EventService {
         return saved;
     }
 
-    public Event findById(Long id) {
+    private Event findById(Long id) {
         return eventRepository.findById(id)
                 .orElseThrow(() -> new EventNotFoundException(id));
     }
