@@ -1,11 +1,13 @@
+# syntax=docker/dockerfile:1.2
 FROM maven:3.9-eclipse-temurin-11 AS build
 WORKDIR /build
-ARG GITHUB_TOKEN
-RUN mkdir -p /root/.m2 && \
-    echo "<settings><servers><server><id>github</id><username>token</username><password>${GITHUB_TOKEN}</password></server></servers></settings>" \
-    > /root/.m2/settings.xml
 COPY pom.xml .
-RUN mvn dependency:go-offline -q
+RUN --mount=type=secret,id=github_token \
+    mkdir -p /root/.m2 && \
+    printf '<settings><servers><server><id>github</id><username>token</username><password>%s</password></server></servers></settings>\n' \
+        "$(cat /run/secrets/github_token)" > /root/.m2/settings.xml && \
+    mvn dependency:go-offline -q && \
+    rm -f /root/.m2/settings.xml
 COPY src ./src
 RUN mvn package -DskipTests -q
 

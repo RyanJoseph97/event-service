@@ -136,7 +136,7 @@ public class EventControllerTest {
 
     @Test
     public void getEventsByCreator_returns200() throws Exception {
-        when(eventService.findByCreatorUsername("alice")).thenReturn(List.of(sampleEvent));
+        when(eventService.findByCreatorUsername("alice", null)).thenReturn(List.of(sampleEvent));
 
         mockMvc.perform(get("/events/by-creator/alice"))
                 .andExpect(status().isOk())

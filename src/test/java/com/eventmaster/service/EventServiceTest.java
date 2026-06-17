@@ -173,8 +173,9 @@ public class EventServiceTest {
     @Test
     public void findByCreatorUsername_returnsMatchingEvents() {
         when(eventRepository.findByCreatorUsername("alice")).thenReturn(List.of(sampleEvent));
+        when(eventInviteRepository.findEventIdsByInviteeUsername(any())).thenReturn(List.of());
 
-        List<Event> result = eventService.findByCreatorUsername("alice");
+        List<Event> result = eventService.findByCreatorUsername("alice", "viewer");
 
         assertEquals(1, result.size());
         assertEquals("alice", result.get(0).getCreatorUsername());
@@ -184,7 +185,7 @@ public class EventServiceTest {
     public void findByCreatorUsername_noEvents_returnsEmptyList() {
         when(eventRepository.findByCreatorUsername("nobody")).thenReturn(List.of());
 
-        assertTrue(eventService.findByCreatorUsername("nobody").isEmpty());
+        assertTrue(eventService.findByCreatorUsername("nobody", null).isEmpty());
     }
 
     // --- updateEvent ---

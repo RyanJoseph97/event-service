@@ -70,9 +70,10 @@ public class EventController {
     }
 
     @GetMapping("/by-creator/{username}")
-    public ResponseEntity<List<Event>> getEventsByCreator(@PathVariable String username) {
+    public ResponseEntity<List<Event>> getEventsByCreator(@PathVariable String username,
+                                                          Authentication authentication) {
         logger.debug("GET /events/by-creator/{}", username);
-        return ResponseEntity.ok(eventService.findByCreatorUsername(username));
+        return ResponseEntity.ok(eventService.findByCreatorUsername(username, viewerUsername(authentication)));
     }
 
     @PostMapping

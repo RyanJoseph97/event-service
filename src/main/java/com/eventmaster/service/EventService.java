@@ -29,8 +29,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -135,8 +137,17 @@ public class EventService {
         return eventRepository.findAll(spec, pageable);
     }
 
-    public List<Event> findByCreatorUsername(String creatorUsername) {
-        return eventRepository.findByCreatorUsername(creatorUsername);
+    public List<Event> findByCreatorUsername(String creatorUsername, String viewerUsername) {
+        List<Event> events = eventRepository.findByCreatorUsername(creatorUsername);
+        if (viewerUsername != null && viewerUsername.equals(creatorUsername)) {
+            return events;
+        }
+        Set<Long> invitedIds = viewerUsername != null
+                ? new HashSet<>(eventInviteRepository.findEventIdsByInviteeUsername(viewerUsername))
+                : Collections.emptySet();
+        return events.stream()
+                .filter(e -> e.getVisibility() == Visibility.PUBLIC || invitedIds.contains(e.getId()))
+                .collect(Collectors.toList());
     }
 
     public Event updateEvent(Long id, UpdateEventRequest request, String requesterUsername) {
