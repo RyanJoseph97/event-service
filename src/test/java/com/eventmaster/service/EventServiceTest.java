@@ -6,10 +6,19 @@ import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
+import com.eventmaster.repository.CommentLikeRepository;
+import com.eventmaster.repository.CommentRepository;
+import com.eventmaster.repository.EventInviteRepository;
+import com.eventmaster.repository.EventLikeRepository;
 import com.eventmaster.repository.EventRepository;
+import com.eventmaster.repository.EventRsvpRepository;
+import com.eventmaster.repository.SavedEventRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
 
@@ -25,6 +34,24 @@ public class EventServiceTest {
 
     @Mock
     private EventRepository eventRepository;
+
+    @Mock
+    private CommentLikeRepository commentLikeRepository;
+
+    @Mock
+    private CommentRepository commentRepository;
+
+    @Mock
+    private EventLikeRepository eventLikeRepository;
+
+    @Mock
+    private EventRsvpRepository eventRsvpRepository;
+
+    @Mock
+    private SavedEventRepository savedEventRepository;
+
+    @Mock
+    private EventInviteRepository eventInviteRepository;
 
     @InjectMocks
     private EventService eventService;
@@ -103,7 +130,7 @@ public class EventServiceTest {
     public void findById_found_returnsEvent() {
         when(eventRepository.findById(1L)).thenReturn(Optional.of(sampleEvent));
 
-        Event result = eventService.findById(1L);
+        Event result = eventService.findById(1L, null);
 
         assertNotNull(result);
         assertEquals("Music Night", result.getTitle());
@@ -113,7 +140,7 @@ public class EventServiceTest {
     public void findById_notFound_throwsEventNotFoundException() {
         when(eventRepository.findById(99L)).thenReturn(Optional.empty());
 
-        assertThrows(EventNotFoundException.class, () -> eventService.findById(99L));
+        assertThrows(EventNotFoundException.class, () -> eventService.findById(99L, null));
     }
 
     // --- getAllEvents ---
@@ -121,24 +148,24 @@ public class EventServiceTest {
     @Test
     @SuppressWarnings("unchecked")
     public void getAllEvents_noFilters_returnsList() {
-        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(sampleEvent));
+        when(eventRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
-        List<Event> result = eventService.getAllEvents(null, null, null, null, null);
+        Page<Event> result = eventService.getAllEvents(null, null, null, null, null, null, null, null, Pageable.unpaged(), null);
 
-        assertEquals(1, result.size());
+        assertEquals(1, result.getTotalElements());
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void getAllEvents_withFilters_passesSpecToRepository() {
-        when(eventRepository.findAll(any(Specification.class))).thenReturn(List.of(sampleEvent));
+        when(eventRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
-        List<Event> result = eventService.getAllEvents("Austin", "alice",
+        Page<Event> result = eventService.getAllEvents(null, "Austin", "alice", null,
                 LocalDateTime.of(2025, 1, 1, 0, 0), LocalDateTime.of(2025, 12, 31, 23, 59),
-                Visibility.PUBLIC);
+                Visibility.PUBLIC, null, Pageable.unpaged(), null);
 
-        assertEquals(1, result.size());
-        verify(eventRepository).findAll(any(Specification.class));
+        assertEquals(1, result.getTotalElements());
+        verify(eventRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 
     // --- findByCreatorUsername ---
@@ -146,8 +173,9 @@ public class EventServiceTest {
     @Test
     public void findByCreatorUsername_returnsMatchingEvents() {
         when(eventRepository.findByCreatorUsername("alice")).thenReturn(List.of(sampleEvent));
+        when(eventInviteRepository.findEventIdsByInviteeUsername(any())).thenReturn(List.of());
 
-        List<Event> result = eventService.findByCreatorUsername("alice");
+        List<Event> result = eventService.findByCreatorUsername("alice", "viewer");
 
         assertEquals(1, result.size());
         assertEquals("alice", result.get(0).getCreatorUsername());
@@ -157,7 +185,7 @@ public class EventServiceTest {
     public void findByCreatorUsername_noEvents_returnsEmptyList() {
         when(eventRepository.findByCreatorUsername("nobody")).thenReturn(List.of());
 
-        assertTrue(eventService.findByCreatorUsername("nobody").isEmpty());
+        assertTrue(eventService.findByCreatorUsername("nobody", null).isEmpty());
     }
 
     // --- updateEvent ---
@@ -247,6 +275,7 @@ public class EventServiceTest {
         ReflectionTestUtils.setField(req, "location", "Test location");
         ReflectionTestUtils.setField(req, "startTime", LocalDateTime.of(2025, 8, 1, 12, 0));
         ReflectionTestUtils.setField(req, "visibility", visibility);
+        ReflectionTestUtils.setField(req, "category", com.eventmaster.model.EventCategory.SOCIAL);
         return req;
     }
 }

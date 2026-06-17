@@ -3,14 +3,21 @@ package com.eventmaster.controller;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventCategory;
+import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.service.EventService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
@@ -34,27 +41,39 @@ public class EventController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
+    public ResponseEntity<Event> getEventById(@PathVariable Long id, Authentication authentication) {
         logger.debug("GET /events/{}", id);
-        return ResponseEntity.ok(eventService.findById(id));
+        return ResponseEntity.ok(eventService.findById(id, viewerUsername(authentication)));
     }
 
     @GetMapping
-    public ResponseEntity<List<Event>> getAllEvents(
+    public ResponseEntity<Page<EventSummaryResponse>> getAllEvents(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String creatorUsername,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAfter,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startBefore,
-            @RequestParam(required = false) Visibility visibility) {
-        logger.debug("GET /events location={} creatorUsername={} startAfter={} startBefore={} visibility={}",
-                location, creatorUsername, startAfter, startBefore, visibility);
-        return ResponseEntity.ok(eventService.getAllEvents(location, creatorUsername, startAfter, startBefore, visibility));
+            @RequestParam(required = false) Visibility visibility,
+            @RequestParam(required = false) EventCategory category,
+            @PageableDefault(size = 20) Pageable pageable,
+            Authentication authentication) {
+        logger.debug("GET /events keyword={} location={} creatorUsername={} startAfter={} startBefore={} visibility={} category={}",
+                keyword, location, creatorUsername, startAfter, startBefore, visibility, category);
+        Page<Event> page = eventService.getAllEvents(keyword, location, creatorUsername, null,
+                startAfter, startBefore, visibility, category, pageable, viewerUsername(authentication));
+        return ResponseEntity.ok(new PageImpl<>(eventService.toSummaries(page.getContent()), pageable, page.getTotalElements()));
+    }
+
+    private String viewerUsername(Authentication authentication) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) return null;
+        return authentication.getName();
     }
 
     @GetMapping("/by-creator/{username}")
-    public ResponseEntity<List<Event>> getEventsByCreator(@PathVariable String username) {
+    public ResponseEntity<List<Event>> getEventsByCreator(@PathVariable String username,
+                                                          Authentication authentication) {
         logger.debug("GET /events/by-creator/{}", username);
-        return ResponseEntity.ok(eventService.findByCreatorUsername(username));
+        return ResponseEntity.ok(eventService.findByCreatorUsername(username, viewerUsername(authentication)));
     }
 
     @PostMapping

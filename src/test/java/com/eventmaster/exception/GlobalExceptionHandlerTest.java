@@ -75,6 +75,20 @@ public class GlobalExceptionHandlerTest {
     }
 
     @Test
+    public void handleCommentNotFound_returns404() {
+        CommentNotFoundException ex = new CommentNotFoundException(7L);
+
+        ResponseEntity<Object> response = handler.handleCommentNotFound(ex);
+
+        assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+        assertNotNull(body);
+        assertEquals(404, body.get("status"));
+        assertEquals("Not Found", body.get("error"));
+        assertTrue(body.get("message").toString().contains("7"));
+    }
+
+    @Test
     public void handleGlobal_returns500() {
         Exception ex = new RuntimeException("Something unexpected");
 

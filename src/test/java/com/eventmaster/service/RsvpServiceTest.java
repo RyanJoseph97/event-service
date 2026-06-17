@@ -13,6 +13,7 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class RsvpServiceTest {
@@ -40,7 +41,7 @@ public class RsvpServiceTest {
 
     @Test
     public void upsertRsvp_noExisting_createsNew() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(rsvpRepository.findByEventIdAndUsername(1L, "bob")).thenReturn(Optional.empty());
         when(rsvpRepository.save(any(EventRsvp.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -54,7 +55,7 @@ public class RsvpServiceTest {
     @Test
     public void upsertRsvp_existingRsvp_updatesStatus() {
         EventRsvp existing = new EventRsvp(event, "bob", RsvpStatus.INTERESTED);
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(rsvpRepository.findByEventIdAndUsername(1L, "bob")).thenReturn(Optional.of(existing));
         when(rsvpRepository.save(any(EventRsvp.class))).thenAnswer(inv -> inv.getArgument(0));
 
@@ -66,7 +67,7 @@ public class RsvpServiceTest {
 
     @Test
     public void upsertRsvp_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(eq(99L), any())).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class,
                 () -> rsvpService.upsertRsvp(99L, "bob", RsvpStatus.GOING));
@@ -76,7 +77,7 @@ public class RsvpServiceTest {
 
     @Test
     public void removeRsvp_success_deletes() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(rsvpRepository.existsByEventIdAndUsername(1L, "bob")).thenReturn(true);
 
         rsvpService.removeRsvp(1L, "bob");
@@ -86,7 +87,7 @@ public class RsvpServiceTest {
 
     @Test
     public void removeRsvp_noExistingRsvp_throwsIllegalState() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(rsvpRepository.existsByEventIdAndUsername(1L, "bob")).thenReturn(false);
 
         assertThrows(IllegalStateException.class, () -> rsvpService.removeRsvp(1L, "bob"));
@@ -95,7 +96,7 @@ public class RsvpServiceTest {
 
     @Test
     public void removeRsvp_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(eq(99L), any())).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class, () -> rsvpService.removeRsvp(99L, "bob"));
     }
@@ -104,7 +105,7 @@ public class RsvpServiceTest {
 
     @Test
     public void getSummary_returnsCorrectCounts() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(rsvpRepository.countByEventIdAndStatus(1L, RsvpStatus.GOING)).thenReturn(5L);
         when(rsvpRepository.countByEventIdAndStatus(1L, RsvpStatus.INTERESTED)).thenReturn(10L);
         when(rsvpRepository.countByEventIdAndStatus(1L, RsvpStatus.NOT_GOING)).thenReturn(2L);
@@ -118,7 +119,7 @@ public class RsvpServiceTest {
 
     @Test
     public void getSummary_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(eq(99L), any())).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class, () -> rsvpService.getSummary(99L));
     }

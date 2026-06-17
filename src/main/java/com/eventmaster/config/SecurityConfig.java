@@ -28,6 +28,7 @@ public class SecurityConfig {
                 // Anyone can browse events
                 .antMatchers(HttpMethod.GET, "/events", "/events/**").permitAll()
                 .antMatchers("/h2-console/**").permitAll()
+                .antMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 // Creating/modifying events requires a valid JWT
                 .anyRequest().authenticated()
             .and()

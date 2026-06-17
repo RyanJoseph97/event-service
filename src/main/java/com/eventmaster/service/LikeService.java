@@ -24,7 +24,7 @@ public class LikeService {
 
     @Transactional
     public void like(Long eventId, String username) {
-        Event event = eventService.findById(eventId);
+        Event event = eventService.findById(eventId, username);
         if (likeRepository.existsByEventIdAndUsername(eventId, username)) {
             throw new IllegalStateException("You have already liked this event");
         }
@@ -39,7 +39,7 @@ public class LikeService {
 
     @Transactional
     public void unlike(Long eventId, String username) {
-        eventService.findById(eventId); // verify event exists
+        eventService.findById(eventId, username);
         if (!likeRepository.existsByEventIdAndUsername(eventId, username)) {
             throw new IllegalStateException("You have not liked this event");
         }
@@ -48,8 +48,13 @@ public class LikeService {
     }
 
     public LikeCountResponse getLikeCount(Long eventId) {
-        eventService.findById(eventId); // verify event exists
+        eventService.findById(eventId, null);
         long count = likeRepository.countByEventId(eventId);
         return new LikeCountResponse(count);
+    }
+
+    public boolean isLikedByUser(Long eventId, String username) {
+        eventService.findById(eventId, username);
+        return likeRepository.existsByEventIdAndUsername(eventId, username);
     }
 }

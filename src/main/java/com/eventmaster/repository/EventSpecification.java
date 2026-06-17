@@ -1,12 +1,26 @@
 package com.eventmaster.repository;
 
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventCategory;
 import com.eventmaster.model.Visibility;
 import org.springframework.data.jpa.domain.Specification;
 
+import javax.persistence.criteria.Predicate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 public class EventSpecification {
+
+    public static Specification<Event> keywordContains(String keyword) {
+        return (root, query, cb) -> {
+            String pattern = "%" + keyword.toLowerCase() + "%";
+            return cb.or(
+                cb.like(cb.lower(root.get("title")), pattern),
+                cb.like(cb.lower(root.get("description")), pattern)
+            );
+        };
+    }
 
     public static Specification<Event> locationContains(String location) {
         return (root, query, cb) ->
@@ -31,5 +45,27 @@ public class EventSpecification {
     public static Specification<Event> visibilityEquals(Visibility visibility) {
         return (root, query, cb) ->
                 cb.equal(root.get("visibility"), visibility);
+    }
+
+    public static Specification<Event> creatorUsernameIn(List<String> usernames) {
+        return (root, query, cb) ->
+                root.get("creatorUsername").in(usernames);
+    }
+
+    public static Specification<Event> categoryEquals(EventCategory category) {
+        return (root, query, cb) ->
+                cb.equal(root.get("category"), category);
+    }
+
+    public static Specification<Event> visibleTo(String viewerUsername, List<Long> invitedEventIds) {
+        return (root, query, cb) -> {
+            List<Predicate> or = new ArrayList<>();
+            or.add(cb.equal(root.get("visibility"), Visibility.PUBLIC));
+            or.add(cb.equal(root.get("creatorUsername"), viewerUsername));
+            if (!invitedEventIds.isEmpty()) {
+                or.add(root.get("id").in(invitedEventIds));
+            }
+            return cb.or(or.toArray(new Predicate[0]));
+        };
     }
 }

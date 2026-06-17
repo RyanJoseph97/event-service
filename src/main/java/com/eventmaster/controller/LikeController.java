@@ -3,7 +3,9 @@ package com.eventmaster.controller;
 import com.eventmaster.model.LikeCountResponse;
 import com.eventmaster.service.LikeService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,5 +31,13 @@ public class LikeController {
     @GetMapping("/{id}/likes")
     public ResponseEntity<LikeCountResponse> getLikeCount(@PathVariable Long id) {
         return ResponseEntity.ok(likeService.getLikeCount(id));
+    }
+
+    @GetMapping("/{id}/likes/me")
+    public ResponseEntity<Boolean> isLikedByMe(@PathVariable Long id, Authentication authentication) {
+        if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        return ResponseEntity.ok(likeService.isLikedByUser(id, authentication.getName()));
     }
 }

@@ -1,7 +1,9 @@
 package com.eventmaster.service;
 
+import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventRsvp;
+import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.model.RsvpStatus;
 import com.eventmaster.model.RsvpSummaryResponse;
 import com.eventmaster.repository.EventRsvpRepository;
@@ -11,6 +13,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.util.Comparator;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class RsvpService {
@@ -29,7 +36,7 @@ public class RsvpService {
      */
     @Transactional
     public EventRsvp upsertRsvp(Long eventId, String username, RsvpStatus status) {
-        Event event = eventService.findById(eventId);
+        Event event = eventService.findById(eventId, username);
         try {
             // Use map() so setStatus() (which stamps updatedAt) only runs on existing RSVPs,
             // not on a freshly constructed one where updatedAt should remain null.
@@ -51,7 +58,7 @@ public class RsvpService {
 
     @Transactional
     public void removeRsvp(Long eventId, String username) {
-        eventService.findById(eventId); // verify event exists
+        eventService.findById(eventId, username);
         if (!rsvpRepository.existsByEventIdAndUsername(eventId, username)) {
             throw new IllegalStateException("You do not have an RSVP for this event");
         }
@@ -60,10 +67,30 @@ public class RsvpService {
     }
 
     public RsvpSummaryResponse getSummary(Long eventId) {
-        eventService.findById(eventId); // verify event exists
+        eventService.findById(eventId, null);
         long going      = rsvpRepository.countByEventIdAndStatus(eventId, RsvpStatus.GOING);
         long interested = rsvpRepository.countByEventIdAndStatus(eventId, RsvpStatus.INTERESTED);
         long notGoing   = rsvpRepository.countByEventIdAndStatus(eventId, RsvpStatus.NOT_GOING);
         return new RsvpSummaryResponse(going, interested, notGoing);
+    }
+
+    public java.util.Optional<EventRsvp> getMyRsvp(Long eventId, String username) {
+        eventService.findById(eventId, username);
+        return rsvpRepository.findByEventIdAndUsername(eventId, username);
+    }
+
+    public List<EventSummaryResponse> getRsvpedEvents(String requestedUsername, String authenticatedUsername) {
+        if (!requestedUsername.equals(authenticatedUsername)) {
+            throw new ForbiddenException("You can only view your own RSVPed events");
+        }
+        LocalDateTime now = LocalDateTime.now();
+        List<Event> upcoming = rsvpRepository.findByUsernameAndStatusInWithEvent(
+                requestedUsername, List.of(RsvpStatus.GOING, RsvpStatus.INTERESTED)
+        ).stream()
+                .map(EventRsvp::getEvent)
+                .filter(e -> e.getStartTime() != null && e.getStartTime().isAfter(now))
+                .sorted(Comparator.comparing(Event::getStartTime))
+                .collect(Collectors.toList());
+        return eventService.toSummaries(upcoming);
     }
 }

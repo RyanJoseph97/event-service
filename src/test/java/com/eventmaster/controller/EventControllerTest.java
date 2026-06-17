@@ -5,12 +5,16 @@ import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.exception.GlobalExceptionHandler;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventSummaryResponse;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.service.EventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.*;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableHandlerMethodArgumentResolver;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -30,7 +34,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// Note: getAllEvents now takes (location, creatorUsername, startAfter, startBefore, visibility)
+// Note: getAllEvents takes (keyword, location, creatorUsername, creatorUsernames, startAfter, startBefore, visibility, category, pageable, viewerUsername)
 
 public class EventControllerTest {
 
@@ -48,11 +52,20 @@ public class EventControllerTest {
         MockitoAnnotations.openMocks(this);
         mockMvc = MockMvcBuilders.standaloneSetup(eventController)
                 .setControllerAdvice(new GlobalExceptionHandler())
+                .setCustomArgumentResolvers(new PageableHandlerMethodArgumentResolver())
                 .build();
 
         sampleEvent = new Event("Music Night", "Live bands", "6th Street",
                 LocalDateTime.of(2025, 6, 1, 20, 0), null, 100, "alice", Visibility.PUBLIC);
         ReflectionTestUtils.setField(sampleEvent, "id", 1L);
+
+        when(eventService.toSummaries(anyList()))
+                .thenAnswer(inv -> {
+                    List<Event> events = inv.getArgument(0);
+                    return events.stream()
+                            .map(e -> new EventSummaryResponse(e, 0L, 0L))
+                            .collect(Collectors.toList());
+                });
     }
 
     /** Sets request principal so Spring MVC injects Authentication into controller params. */
@@ -72,7 +85,7 @@ public class EventControllerTest {
 
     @Test
     public void getEventById_found_returns200() throws Exception {
-        when(eventService.findById(1L)).thenReturn(sampleEvent);
+        when(eventService.findById(eq(1L), isNull())).thenReturn(sampleEvent);
 
         mockMvc.perform(get("/events/1"))
                 .andExpect(status().isOk())
@@ -81,7 +94,7 @@ public class EventControllerTest {
 
     @Test
     public void getEventById_notFound_returns404() throws Exception {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(eq(99L), isNull())).thenThrow(new EventNotFoundException(99L));
 
         mockMvc.perform(get("/events/99"))
                 .andExpect(status().isNotFound());
@@ -91,38 +104,39 @@ public class EventControllerTest {
 
     @Test
     public void getAllEvents_noParams_returns200WithList() throws Exception {
-        when(eventService.getAllEvents(null, null, null, null, null)).thenReturn(List.of(sampleEvent));
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class), isNull()))
+                .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Music Night"));
+                .andExpect(jsonPath("$.content[0].title").value("Music Night"));
     }
 
     @Test
     public void getAllEvents_withLocationFilter_passesParamToService() throws Exception {
-        when(eventService.getAllEvents(eq("Austin"), isNull(), isNull(), isNull(), isNull()))
-                .thenReturn(List.of(sampleEvent));
+        when(eventService.getAllEvents(isNull(), eq("Austin"), isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), any(Pageable.class), isNull()))
+                .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events").param("location", "Austin"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Music Night"));
+                .andExpect(jsonPath("$.content[0].title").value("Music Night"));
     }
 
     @Test
     public void getAllEvents_withVisibilityFilter_passesParamToService() throws Exception {
-        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC)))
-                .thenReturn(List.of(sampleEvent));
+        when(eventService.getAllEvents(isNull(), isNull(), isNull(), isNull(), isNull(), isNull(), eq(Visibility.PUBLIC), isNull(), any(Pageable.class), isNull()))
+                .thenReturn(new PageImpl<>(List.of(sampleEvent)));
 
         mockMvc.perform(get("/events").param("visibility", "PUBLIC"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].title").value("Music Night"));
+                .andExpect(jsonPath("$.content[0].title").value("Music Night"));
     }
 
     // --- GET /by-creator/{username} ---
 
     @Test
     public void getEventsByCreator_returns200() throws Exception {
-        when(eventService.findByCreatorUsername("alice")).thenReturn(List.of(sampleEvent));
+        when(eventService.findByCreatorUsername("alice", null)).thenReturn(List.of(sampleEvent));
 
         mockMvc.perform(get("/events/by-creator/alice"))
                 .andExpect(status().isOk())
@@ -137,7 +151,7 @@ public class EventControllerTest {
                 .thenReturn(sampleEvent);
 
         String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
-                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\"}";
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\",\"category\":\"MUSIC\"}";
 
         mockMvc.perform(post("/events")
                         .with(auth("alice", "VERIFIED"))
@@ -153,7 +167,7 @@ public class EventControllerTest {
                 .thenReturn(sampleEvent);
 
         String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
-                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\"}";
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\",\"category\":\"MUSIC\"}";
 
         mockMvc.perform(post("/events")
                         .with(auth("admin", "TRUSTED"))
@@ -165,7 +179,7 @@ public class EventControllerTest {
     @Test
     public void createPublicEvent_asUnverifiedUser_returns403() throws Exception {
         String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
-                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\"}";
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\",\"category\":\"MUSIC\"}";
 
         mockMvc.perform(post("/events")
                         .with(auth("newuser", "UNVERIFIED"))
@@ -184,7 +198,7 @@ public class EventControllerTest {
                 .thenReturn(privateEvent);
 
         String body = "{\"title\":\"Private Party\",\"description\":\"Invite only\",\"location\":\"Home\","
-                + "\"startTime\":\"2025-06-01T18:00:00\",\"visibility\":\"INVITE_ONLY\"}";
+                + "\"startTime\":\"2025-06-01T18:00:00\",\"visibility\":\"INVITE_ONLY\",\"category\":\"SOCIAL\"}";
 
         mockMvc.perform(post("/events")
                         .with(auth("newuser", "UNVERIFIED"))
@@ -229,7 +243,7 @@ public class EventControllerTest {
                 .thenReturn(eventWithImage);
 
         String body = "{\"title\":\"Music Night\",\"description\":\"Live bands\",\"location\":\"6th Street\","
-                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\","
+                + "\"startTime\":\"2025-06-01T20:00:00\",\"visibility\":\"PUBLIC\",\"category\":\"MUSIC\","
                 + "\"imageUrl\":\"https://example.com/image.jpg\"}";
 
         mockMvc.perform(post("/events")

@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 public class LikeServiceTest {
@@ -42,7 +43,7 @@ public class LikeServiceTest {
 
     @Test
     public void like_success_savesLike() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(likeRepository.existsByEventIdAndUsername(1L, "bob")).thenReturn(false);
 
         likeService.like(1L, "bob");
@@ -52,7 +53,7 @@ public class LikeServiceTest {
 
     @Test
     public void like_alreadyLiked_throwsIllegalState() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(likeRepository.existsByEventIdAndUsername(1L, "bob")).thenReturn(true);
 
         assertThrows(IllegalStateException.class, () -> likeService.like(1L, "bob"));
@@ -61,7 +62,7 @@ public class LikeServiceTest {
 
     @Test
     public void like_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(eq(99L), any())).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class, () -> likeService.like(99L, "bob"));
     }
@@ -70,7 +71,7 @@ public class LikeServiceTest {
 
     @Test
     public void unlike_success_deletesLike() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(likeRepository.existsByEventIdAndUsername(1L, "bob")).thenReturn(true);
 
         likeService.unlike(1L, "bob");
@@ -80,7 +81,7 @@ public class LikeServiceTest {
 
     @Test
     public void unlike_notLiked_throwsIllegalState() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(likeRepository.existsByEventIdAndUsername(1L, "bob")).thenReturn(false);
 
         assertThrows(IllegalStateException.class, () -> likeService.unlike(1L, "bob"));
@@ -89,7 +90,7 @@ public class LikeServiceTest {
 
     @Test
     public void unlike_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(eq(99L), any())).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class, () -> likeService.unlike(99L, "bob"));
     }
@@ -98,7 +99,7 @@ public class LikeServiceTest {
 
     @Test
     public void getLikeCount_returnsCount() {
-        when(eventService.findById(1L)).thenReturn(event);
+        when(eventService.findById(eq(1L), any())).thenReturn(event);
         when(likeRepository.countByEventId(1L)).thenReturn(7L);
 
         LikeCountResponse response = likeService.getLikeCount(1L);
@@ -108,7 +109,7 @@ public class LikeServiceTest {
 
     @Test
     public void getLikeCount_eventNotFound_throwsEventNotFound() {
-        when(eventService.findById(99L)).thenThrow(new EventNotFoundException(99L));
+        when(eventService.findById(eq(99L), any())).thenThrow(new EventNotFoundException(99L));
 
         assertThrows(EventNotFoundException.class, () -> likeService.getLikeCount(99L));
     }
