@@ -177,9 +177,7 @@ public class EventService {
     }
 
     public EventSummaryResponse toSummary(Event event) {
-        long likeCount = eventLikeRepository.countByEventId(event.getId());
-        long goingCount = eventRsvpRepository.countByEventIdAndStatus(event.getId(), RsvpStatus.GOING);
-        return new EventSummaryResponse(event, likeCount, goingCount);
+        return toSummaries(List.of(event)).get(0);
     }
 
     public List<EventSummaryResponse> toSummaries(List<Event> events) {
