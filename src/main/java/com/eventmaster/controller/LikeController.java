@@ -34,12 +34,10 @@ public class LikeController {
     }
 
     @GetMapping("/{id}/likes/me")
-    public ResponseEntity<Void> isLikedByMe(@PathVariable Long id, Authentication authentication) {
+    public ResponseEntity<Boolean> isLikedByMe(@PathVariable Long id, Authentication authentication) {
         if (authentication == null || authentication instanceof AnonymousAuthenticationToken) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-        return likeService.isLikedByUser(id, authentication.getName())
-                ? ResponseEntity.ok().build()
-                : ResponseEntity.notFound().build();
+        return ResponseEntity.ok(likeService.isLikedByUser(id, authentication.getName()));
     }
 }

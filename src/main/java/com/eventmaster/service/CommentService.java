@@ -38,6 +38,7 @@ public class CommentService {
 
     @Transactional
     public Comment createComment(Long eventId, String content, String username) {
+        // Verify user can access event (throws if event doesn't exist or user lacks permission)
         eventService.findById(eventId, username);
         Comment comment = new Comment(eventId, username, content);
         Comment saved = commentRepository.save(comment);
@@ -46,6 +47,7 @@ public class CommentService {
     }
 
     public List<CommentResponse> getCommentsByEventId(Long eventId, String viewerUsername) {
+        // Verify user can access event (throws if event doesn't exist or user lacks permission)
         eventService.findById(eventId, viewerUsername);
         List<Comment> comments = commentRepository.findByEventId(eventId);
         Map<String, String> profilePicByUsername = new HashMap<>();
@@ -64,6 +66,7 @@ public class CommentService {
     @Transactional
     public void likeComment(Long commentId, String username) {
         Comment comment = findById(commentId);
+        // Verify user can access event (throws if event doesn't exist or user lacks permission)
         eventService.findById(comment.getEventId(), username);
         if (commentLikeRepository.existsByCommentIdAndUsername(commentId, username)) {
             throw new IllegalStateException("You have already liked this comment");
@@ -79,6 +82,7 @@ public class CommentService {
     @Transactional
     public void unlikeComment(Long commentId, String username) {
         Comment comment = findById(commentId);
+        // Verify user can access event (throws if event doesn't exist or user lacks permission)
         eventService.findById(comment.getEventId(), username);
         if (!commentLikeRepository.existsByCommentIdAndUsername(commentId, username)) {
             throw new IllegalStateException("You have not liked this comment");
