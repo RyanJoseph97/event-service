@@ -1,5 +1,6 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventLike;
 import com.eventmaster.model.LikeCountResponse;
@@ -22,6 +23,9 @@ public class LikeService {
     @Autowired
     private EventService eventService;
 
+    @Autowired
+    private UserServiceClient userServiceClient;
+
     @Transactional
     public void like(Long eventId, String username) {
         Event event = eventService.findById(eventId, username);
@@ -35,6 +39,11 @@ public class LikeService {
             throw new IllegalStateException("You have already liked this event");
         }
         logger.info("User '{}' liked event {}", username, eventId);
+        if (!username.equals(event.getCreatorUsername())) {
+            userServiceClient.sendNotification(event.getCreatorUsername(), "EVENT_LIKE", username,
+                    String.valueOf(eventId),
+                    "@" + username + " liked your event \"" + event.getTitle() + "\"");
+        }
     }
 
     @Transactional

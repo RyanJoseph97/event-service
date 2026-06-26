@@ -1,5 +1,6 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.exception.EventNotFoundException;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventLike;
@@ -25,6 +26,9 @@ public class LikeServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private UserServiceClient userServiceClient;
 
     @InjectMocks
     private LikeService likeService;

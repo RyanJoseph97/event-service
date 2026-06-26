@@ -51,6 +51,7 @@ public class EventController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) String location,
             @RequestParam(required = false) String creatorUsername,
+            @RequestParam(required = false) List<String> creatorUsernames,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startAfter,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startBefore,
             @RequestParam(required = false) Visibility visibility,
@@ -59,7 +60,7 @@ public class EventController {
             Authentication authentication) {
         logger.debug("GET /events keyword={} location={} creatorUsername={} startAfter={} startBefore={} visibility={} category={}",
                 keyword, location, creatorUsername, startAfter, startBefore, visibility, category);
-        Page<Event> page = eventService.getAllEvents(keyword, location, creatorUsername, null,
+        Page<Event> page = eventService.getAllEvents(keyword, location, creatorUsername, creatorUsernames,
                 startAfter, startBefore, visibility, category, pageable, viewerUsername(authentication));
         return ResponseEntity.ok(new PageImpl<>(eventService.toSummaries(page.getContent()), pageable, page.getTotalElements()));
     }

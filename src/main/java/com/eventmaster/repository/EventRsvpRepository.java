@@ -24,6 +24,8 @@ public interface EventRsvpRepository extends JpaRepository<EventRsvp, Long> {
 
     List<EventRsvp> findByUsernameAndStatusIn(String username, List<RsvpStatus> statuses);
 
+    List<EventRsvp> findByEventIdAndStatusIn(Long eventId, List<RsvpStatus> statuses);
+
     @Query("SELECT r FROM EventRsvp r JOIN FETCH r.event WHERE r.username = :username AND r.status IN :statuses")
     List<EventRsvp> findByUsernameAndStatusInWithEvent(@Param("username") String username, @Param("statuses") List<RsvpStatus> statuses);
 

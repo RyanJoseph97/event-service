@@ -1,9 +1,12 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.exception.EventNotFoundException;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
+import com.eventmaster.model.EventRsvp;
+import com.eventmaster.model.RsvpStatus;
 import com.eventmaster.model.UpdateEventRequest;
 import com.eventmaster.model.Visibility;
 import com.eventmaster.repository.CommentLikeRepository;
@@ -52,6 +55,9 @@ public class EventServiceTest {
 
     @Mock
     private EventInviteRepository eventInviteRepository;
+
+    @Mock
+    private UserServiceClient userServiceClient;
 
     @InjectMocks
     private EventService eventService;
@@ -235,6 +241,42 @@ public class EventServiceTest {
 
         assertThrows(EventNotFoundException.class,
                 () -> eventService.updateEvent(99L, new UpdateEventRequest(), "alice"));
+    }
+
+    @Test
+    public void updateEvent_timeChange_notifiesAttendeesExceptCreator() {
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(sampleEvent));
+        when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
+        EventRsvp bob = new EventRsvp(sampleEvent, "bob", RsvpStatus.GOING);
+        EventRsvp creator = new EventRsvp(sampleEvent, "alice", RsvpStatus.GOING);
+        when(eventRsvpRepository.findByEventIdAndStatusIn(eq(1L), anyList()))
+                .thenReturn(List.of(bob, creator));
+
+        UpdateEventRequest request = new UpdateEventRequest();
+        ReflectionTestUtils.setField(request, "startTime", LocalDateTime.of(2025, 6, 2, 20, 0));
+
+        eventService.updateEvent(1L, request, "alice");
+
+        // The attendee fan-out runs asynchronously (off the request thread), so use Mockito's
+        // timeout() verification mode to await the notification rather than checking synchronously.
+        // bob is notified; alice (the creator who made the change) is skipped.
+        verify(userServiceClient, timeout(2000)).sendNotification(eq("bob"), eq("EVENT_UPDATE"), eq("alice"),
+                eq("1"), contains("changed the time"));
+        verify(userServiceClient, never()).sendNotification(eq("alice"), any(), any(), any(), any());
+    }
+
+    @Test
+    public void updateEvent_noTimeOrLocationChange_sendsNoNotification() {
+        when(eventRepository.findById(1L)).thenReturn(Optional.of(sampleEvent));
+        when(eventRepository.save(any(Event.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        UpdateEventRequest request = new UpdateEventRequest();
+        ReflectionTestUtils.setField(request, "title", "New Title");
+
+        eventService.updateEvent(1L, request, "alice");
+
+        verify(eventRsvpRepository, never()).findByEventIdAndStatusIn(any(), anyList());
+        verifyNoInteractions(userServiceClient);
     }
 
     // --- deleteEvent ---

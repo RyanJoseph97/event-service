@@ -5,6 +5,7 @@ import com.eventmaster.exception.CommentNotFoundException;
 import com.eventmaster.model.Comment;
 import com.eventmaster.model.CommentLike;
 import com.eventmaster.model.CommentResponse;
+import com.eventmaster.model.Event;
 import com.eventmaster.repository.CommentLikeRepository;
 import com.eventmaster.repository.CommentRepository;
 import org.slf4j.Logger;
@@ -39,10 +40,15 @@ public class CommentService {
     @Transactional
     public Comment createComment(Long eventId, String content, String username) {
         // Verify user can access event (throws if event doesn't exist or user lacks permission)
-        eventService.findById(eventId, username);
+        Event event = eventService.findById(eventId, username);
         Comment comment = new Comment(eventId, username, content);
         Comment saved = commentRepository.save(comment);
         logger.info("User '{}' commented on event {}", username, eventId);
+        if (!username.equals(event.getCreatorUsername())) {
+            userServiceClient.sendNotification(event.getCreatorUsername(), "EVENT_COMMENT", username,
+                    String.valueOf(eventId),
+                    "@" + username + " commented on your event \"" + event.getTitle() + "\"");
+        }
         return saved;
     }
 

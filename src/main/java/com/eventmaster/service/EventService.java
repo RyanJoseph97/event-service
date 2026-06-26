@@ -1,7 +1,9 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.exception.EventNotFoundException;
 import com.eventmaster.exception.ForbiddenException;
+import com.eventmaster.model.EventRsvp;
 import com.eventmaster.model.CreateEventRequest;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventCategory;
@@ -32,7 +34,9 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @Service
@@ -60,6 +64,9 @@ public class EventService {
 
     @Autowired
     private EventInviteRepository eventInviteRepository;
+
+    @Autowired
+    private UserServiceClient userServiceClient;
 
     @org.springframework.beans.factory.annotation.Value("${app.search.fts.enabled:false}")
     private boolean ftsEnabled;
@@ -155,6 +162,10 @@ public class EventService {
         if (!event.getCreatorUsername().equals(requesterUsername)) {
             throw new ForbiddenException("You do not have permission to modify this event");
         }
+        // Snapshot the attendee-relevant fields before mutating so we can detect a real change.
+        LocalDateTime oldStartTime = event.getStartTime();
+        String oldLocation = event.getLocation();
+
         if (request.getTitle() != null) event.setTitle(request.getTitle());
         if (request.getDescription() != null) event.setDescription(request.getDescription());
         if (request.getLocation() != null) event.setLocation(request.getLocation());
@@ -173,7 +184,36 @@ public class EventService {
         if (request.getLongitude() != null) event.setLongitude(request.getLongitude());
         Event updated = eventRepository.save(event);
         logger.info("Event {} updated by user: {}", id, requesterUsername);
+
+        boolean timeChanged = !Objects.equals(oldStartTime, updated.getStartTime());
+        boolean locationChanged = !Objects.equals(oldLocation, updated.getLocation());
+        if (timeChanged || locationChanged) {
+            final Event snapshot = updated;
+            final boolean tc = timeChanged, lc = locationChanged;
+            CompletableFuture.runAsync(() -> notifyAttendeesOfChange(snapshot, tc, lc));
+        }
         return updated;
+    }
+
+    /**
+     * Best-effort fan-out: tell everyone who is GOING or INTERESTED that the time
+     * and/or location of an event they RSVP'd to has changed. The creator is
+     * skipped (they made the change). Notification delivery is non-blocking and
+     * swallows failures inside {@link UserServiceClient}.
+     */
+    private void notifyAttendeesOfChange(Event event, boolean timeChanged, boolean locationChanged) {
+        String what = timeChanged && locationChanged ? "the time and location"
+                : timeChanged ? "the time"
+                : "the location";
+        String message = "@" + event.getCreatorUsername() + " changed " + what
+                + " of \"" + event.getTitle() + "\"";
+        List<EventRsvp> attendees = eventRsvpRepository.findByEventIdAndStatusIn(
+                event.getId(), List.of(RsvpStatus.GOING, RsvpStatus.INTERESTED));
+        for (EventRsvp rsvp : attendees) {
+            if (rsvp.getUsername().equals(event.getCreatorUsername())) continue;
+            userServiceClient.sendNotification(rsvp.getUsername(), "EVENT_UPDATE",
+                    event.getCreatorUsername(), String.valueOf(event.getId()), message);
+        }
     }
 
     public EventSummaryResponse toSummary(Event event) {

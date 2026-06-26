@@ -1,5 +1,6 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventRsvp;
@@ -17,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -30,6 +32,9 @@ public class RsvpService {
     @Autowired
     private EventService eventService;
 
+    @Autowired
+    private UserServiceClient userServiceClient;
+
     /**
      * Creates or updates an RSVP. If the user already has an RSVP for the event
      * the status is updated in place (upsert semantics).
@@ -40,11 +45,21 @@ public class RsvpService {
         try {
             // Use map() so setStatus() (which stamps updatedAt) only runs on existing RSVPs,
             // not on a freshly constructed one where updatedAt should remain null.
-            EventRsvp rsvp = rsvpRepository.findByEventIdAndUsername(eventId, username)
+            Optional<EventRsvp> existingOpt = rsvpRepository.findByEventIdAndUsername(eventId, username);
+            EventRsvp rsvp = existingOpt
                     .map(existing -> { existing.setStatus(status); return existing; })
                     .orElse(new EventRsvp(event, username, status));
             EventRsvp saved = rsvpRepository.save(rsvp);
             logger.info("User '{}' RSVPed to event {} with status {}", username, eventId, status);
+            // Notify the creator only on a brand-new positive RSVP, to avoid noise from
+            // status toggles, NOT_GOING, and self-RSVPs.
+            if (existingOpt.isEmpty() && status != RsvpStatus.NOT_GOING
+                    && !username.equals(event.getCreatorUsername())) {
+                String verb = status == RsvpStatus.GOING ? "is going to" : "is interested in";
+                userServiceClient.sendNotification(event.getCreatorUsername(), "EVENT_RSVP", username,
+                        String.valueOf(eventId),
+                        "@" + username + " " + verb + " your event \"" + event.getTitle() + "\"");
+            }
             return saved;
         } catch (DataIntegrityViolationException e) {
             // Race condition: a concurrent request inserted the row between our find and save.
