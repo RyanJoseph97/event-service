@@ -86,6 +86,12 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Flyway manages the PostgreSQL schema in the docker/prod profile (ddl-auto=validate).
+             Disabled in the local H2 dev profile via spring.flyway.enabled=false. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
