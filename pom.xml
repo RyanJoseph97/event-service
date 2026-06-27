@@ -18,10 +18,23 @@
 
     <properties>
         <java.version>11</java.version>
+        <spring-cloud.version>2021.0.8</spring-cloud.version>
         <!-- Override with -Dgithub.packages.owner=OWNER or set GITHUB_PACKAGES_OWNER env var.
              In GitHub Actions this is set automatically via the CI workflow. -->
         <github.packages.owner>RyanJoseph97</github.packages.owner>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>${spring-cloud.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <!-- Pull jwt-common from GitHub Packages. -->
     <repositories>
@@ -73,6 +86,12 @@
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <!-- Flyway manages the PostgreSQL schema in the docker/prod profile (ddl-auto=validate).
+             Disabled in the local H2 dev profile via spring.flyway.enabled=false. -->
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.github.ben-manes.caffeine</groupId>
             <artifactId>caffeine</artifactId>
@@ -89,6 +108,19 @@
             <groupId>org.springdoc</groupId>
             <artifactId>springdoc-openapi-ui</artifactId>
             <version>1.7.0</version>
+        </dependency>
+        <!-- Distributed Tracing -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-starter-sleuth</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.cloud</groupId>
+            <artifactId>spring-cloud-sleuth-zipkin</artifactId>
         </dependency>
     </dependencies>
 

@@ -1,5 +1,6 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.exception.ForbiddenException;
 import com.eventmaster.model.Event;
 import com.eventmaster.model.EventInvite;
@@ -20,6 +21,9 @@ public class EventInviteService {
 
     @Autowired
     private EventService eventService;
+
+    @Autowired
+    private UserServiceClient userServiceClient;
 
     public List<String> getInvitees(Long eventId, String requesterUsername) {
         Event event = eventService.findById(eventId, requesterUsername);
@@ -47,6 +51,9 @@ public class EventInviteService {
             throw new IllegalStateException("User is already invited");
         }
         inviteRepository.save(new EventInvite(event, inviteeUsername));
+        userServiceClient.sendNotification(inviteeUsername, "EVENT_INVITE", requesterUsername,
+                String.valueOf(event.getId()),
+                "@" + requesterUsername + " invited you to \"" + event.getTitle() + "\"");
     }
 
     @Transactional

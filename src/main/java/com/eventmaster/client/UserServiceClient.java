@@ -11,6 +11,7 @@ import org.springframework.web.client.RestTemplate;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -51,5 +52,29 @@ public class UserServiceClient {
             logger.debug("Could not fetch profile picture for {}: {}", username, e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Create a notification for a user via user-service's network-internal endpoint.
+     * Best-effort: never fails the caller — the triggering action (invite, like,
+     * comment, RSVP) should succeed even if the notification can't be written.
+     *
+     * @param type one of the user-service NotificationType values, e.g. "EVENT_INVITE"
+     * @param actorUsername the user who triggered it
+     * @param entityId related entity reference (event id, username), nullable
+     */
+    public void sendNotification(String recipientUsername, String type, String actorUsername,
+                                 String entityId, String message) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("recipientUsername", recipientUsername);
+        body.put("type", type);
+        body.put("actorUsername", actorUsername);
+        body.put("entityId", entityId);
+        body.put("message", message);
+        try {
+            restTemplate.postForObject(userServiceBaseUrl + "/internal/notifications", body, Void.class);
+        } catch (RestClientException e) {
+            logger.warn("Could not send {} notification to {}: {}", type, recipientUsername, e.getMessage());
+        }
     }
 }

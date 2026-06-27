@@ -1,5 +1,6 @@
 package com.eventmaster.service;
 
+import com.eventmaster.client.UserServiceClient;
 import com.eventmaster.exception.EventNotFoundException;
 import com.eventmaster.model.*;
 import com.eventmaster.repository.EventRsvpRepository;
@@ -23,6 +24,9 @@ public class RsvpServiceTest {
 
     @Mock
     private EventService eventService;
+
+    @Mock
+    private UserServiceClient userServiceClient;
 
     @InjectMocks
     private RsvpService rsvpService;
